@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -9,13 +10,31 @@ import (
 	"github.com/na0chan-go/battle-vision-overlay/engine-go/internal/transport"
 )
 
-const defaultMasterDataPath = "../shared/master-data/pokemon.json"
+var masterDataPathCandidates = []string{
+	"../shared/master-data/pokemon.json",
+	"shared/master-data/pokemon.json",
+}
+
+func loadDex() (*master.Dex, string, error) {
+	var lastErr error
+	for _, path := range masterDataPathCandidates {
+		dex, err := master.LoadDex(path)
+		if err == nil {
+			return dex, path, nil
+		}
+		lastErr = err
+	}
+
+	if lastErr == nil {
+		lastErr = fmt.Errorf("no master data path candidates configured")
+	}
+	return nil, "", lastErr
+}
 
 func main() {
-	dex, err := master.LoadDex(defaultMasterDataPath)
+	dex, path, err := loadDex()
 	if err != nil {
-		log.Printf("failed to load master data from %s: %v", defaultMasterDataPath, err)
-		dex = master.NewEmptyDex()
+		log.Fatalf("failed to load master data: %v", err)
 	}
 
 	addr := ":8080"
@@ -28,6 +47,7 @@ func main() {
 		IdleTimeout:       30 * time.Second,
 	}
 
+	log.Printf("loaded master data from %s", path)
 	log.Printf("overlay-api listening on %s", addr)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
