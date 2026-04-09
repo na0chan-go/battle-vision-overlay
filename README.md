@@ -99,3 +99,21 @@ PYTHONPATH=vision-py/src python3 -m vision.main --image assets/samples/battle_sa
 ```
 
 出力ファイルは省略時に `assets/debug/observation.json` です。
+
+## 最小連携 PoC
+
+`vision-py` から `engine-go` へ observation DTO を POST し、overlay DTO を受け取る最小連携は以下です。
+
+まず Go API を起動します。
+
+```sh
+make run-go
+```
+
+次に Python 側から observation を送ります。
+
+```sh
+PYTHONPATH=vision-py/src python3 -m vision.main --image assets/samples/battle_sample.jpeg --ocr-names --request-overlay
+```
+
+レスポンスは標準出力に pretty JSON で表示され、省略時は `assets/debug/overlay_response.json` にも保存されます。

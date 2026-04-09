@@ -37,9 +37,27 @@
           "type": "string"
         },
         "speed_candidates": {
-          "type": "array",
-          "items": {
-            "type": "integer"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fastest",
+            "neutral",
+            "scarf_fastest",
+            "scarf_neutral"
+          ],
+          "properties": {
+            "fastest": {
+              "type": "integer"
+            },
+            "neutral": {
+              "type": "integer"
+            },
+            "scarf_fastest": {
+              "type": "integer"
+            },
+            "scarf_neutral": {
+              "type": "integer"
+            }
           }
         }
       }

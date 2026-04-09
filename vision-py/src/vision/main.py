@@ -90,6 +90,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="optional path to save the observation JSON",
     )
     parser.add_argument(
+        "--request-overlay",
+        action="store_true",
+        help="POST the observation DTO to engine-go and print the overlay JSON",
+    )
+    parser.add_argument(
+        "--overlay-endpoint",
+        default="http://localhost:8080/api/v1/overlay/preview",
+        help="engine-go overlay preview endpoint",
+    )
+    parser.add_argument(
+        "--overlay-output",
+        type=Path,
+        default=None,
+        help="optional path to save the overlay response JSON",
+    )
+    parser.add_argument(
         "--master-data",
         type=Path,
         default=Path("shared") / "master-data" / "pokemon.json",
@@ -103,6 +119,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.emit_observation and not args.ocr_names:
         parser.error("--emit-observation requires --ocr-names")
+    if args.request_overlay and not args.ocr_names:
+        parser.error("--request-overlay requires --ocr-names")
 
     try:
         if args.ocr_names:
@@ -110,10 +128,12 @@ def main() -> None:
             from vision.name_match import resolve_name_results
             from vision.name_ocr import extract_name_texts
             from vision.observation import build_battle_observation, write_observation_json
+            from vision.transport import post_observation, write_overlay_response_json
 
             ocr_results = extract_name_texts(args.image, args.output_dir)
             gender_results = extract_gender_marks(args.image, args.output_dir)
             should_resolve_names = args.resolve_names or args.emit_observation
+            should_resolve_names = should_resolve_names or args.request_overlay
             resolved_results = (
                 resolve_name_results(
                     ocr_results,
@@ -148,6 +168,29 @@ def main() -> None:
             )
             write_observation_json(observation, observation_output_path)
             print(json.dumps(observation.to_dict(), ensure_ascii=False, indent=2))
+            return
+        if args.request_overlay:
+            observation = build_battle_observation(
+                ocr_results,
+                gender_results,
+                resolved_results,
+            )
+            try:
+                overlay_response = post_observation(
+                    observation.to_dict(),
+                    endpoint_url=args.overlay_endpoint,
+                )
+            except RuntimeError as exc:
+                print(f"overlay request failed: {exc}", file=sys.stderr)
+                raise SystemExit(1) from exc
+
+            overlay_output_path = (
+                args.overlay_output
+                if args.overlay_output is not None
+                else args.output_dir / "overlay_response.json"
+            )
+            write_overlay_response_json(overlay_response, overlay_output_path)
+            print(json.dumps(overlay_response, ensure_ascii=False, indent=2))
             return
         if args.json:
             print(json.dumps(active_payload, ensure_ascii=False, indent=2))

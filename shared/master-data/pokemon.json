@@ -1,30 +1,37 @@
 [
   {
     "species_id": "garchomp",
-    "display_name": "ガブリアス"
+    "display_name": "ガブリアス",
+    "base_speed": 102
   },
   {
     "species_id": "meowstic",
-    "display_name": "ニャオニクス"
+    "display_name": "ニャオニクス",
+    "base_speed": 104
   },
   {
     "species_id": "basculegion",
-    "display_name": "イダイトウ"
+    "display_name": "イダイトウ",
+    "base_speed": 78
   },
   {
     "species_id": "gholdengo",
-    "display_name": "サーフゴー"
+    "display_name": "サーフゴー",
+    "base_speed": 84
   },
   {
     "species_id": "greninja",
-    "display_name": "ゲッコウガ"
+    "display_name": "ゲッコウガ",
+    "base_speed": 122
   },
   {
     "species_id": "excadrill",
-    "display_name": "ドリュウズ"
+    "display_name": "ドリュウズ",
+    "base_speed": 88
   },
   {
     "species_id": "hydrapple",
-    "display_name": "カミツオロチ"
+    "display_name": "カミツオロチ",
+    "base_speed": 44
   }
 ]
