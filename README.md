@@ -91,3 +91,11 @@ PYTHONPATH=vision-py/src python3 -m vision.main --image assets/samples/battle_sa
 ```
 
 辞書データは `shared/master-data/pokemon.json` を参照します。性別記号の切り出しと最小判定も同時に行い、`assets/debug/opponent_gender.png` と `assets/debug/player_gender.png` を保存します。
+
+observation DTO の JSON を構築して標準出力とファイルへ出す PoC は以下です。
+
+```sh
+PYTHONPATH=vision-py/src python3 -m vision.main --image assets/samples/battle_sample.jpeg --ocr-names --emit-observation
+```
+
+出力ファイルは省略時に `assets/debug/observation.json` です。

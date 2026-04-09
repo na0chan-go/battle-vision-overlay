@@ -79,6 +79,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="match OCR raw text against pokemon master data",
     )
     parser.add_argument(
+        "--emit-observation",
+        action="store_true",
+        help="build and print an observation DTO JSON",
+    )
+    parser.add_argument(
+        "--observation-output",
+        type=Path,
+        default=None,
+        help="optional path to save the observation JSON",
+    )
+    parser.add_argument(
         "--master-data",
         type=Path,
         default=Path("shared") / "master-data" / "pokemon.json",
@@ -90,21 +101,25 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+    if args.emit_observation and not args.ocr_names:
+        parser.error("--emit-observation requires --ocr-names")
 
     try:
         if args.ocr_names:
             from vision.gender import extract_gender_marks
             from vision.name_match import resolve_name_results
             from vision.name_ocr import extract_name_texts
+            from vision.observation import build_battle_observation, write_observation_json
 
             ocr_results = extract_name_texts(args.image, args.output_dir)
             gender_results = extract_gender_marks(args.image, args.output_dir)
+            should_resolve_names = args.resolve_names or args.emit_observation
             resolved_results = (
                 resolve_name_results(
                     ocr_results,
                     master_data_path=args.master_data,
                 )
-                if args.resolve_names
+                if should_resolve_names
                 else None
             )
         else:
@@ -120,6 +135,20 @@ def main() -> None:
             gender_results,
             resolved_results,
         )
+        if args.emit_observation:
+            observation = build_battle_observation(
+                ocr_results,
+                gender_results,
+                resolved_results,
+            )
+            observation_output_path = (
+                args.observation_output
+                if args.observation_output is not None
+                else args.output_dir / "observation.json"
+            )
+            write_observation_json(observation, observation_output_path)
+            print(json.dumps(observation.to_dict(), ensure_ascii=False, indent=2))
+            return
         if args.json:
             print(json.dumps(active_payload, ensure_ascii=False, indent=2))
             return

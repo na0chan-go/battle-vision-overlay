@@ -14,7 +14,7 @@
       "type": "string"
     },
     "timestamp": {
-      "type": "string"
+      "type": "integer"
     },
     "player_active": {
       "$ref": "#/$defs/activePokemon"
@@ -37,7 +37,7 @@
       ],
       "properties": {
         "species_id": {
-          "type": "integer"
+          "type": "string"
         },
         "display_name": {
           "type": "string"
