@@ -18,6 +18,11 @@ REFERENCE_NAME_REGIONS: tuple[Region, ...] = (
     Region(name="player_name", left=153, top=930, width=210, height=52),
 )
 
+REFERENCE_GENDER_REGIONS: tuple[Region, ...] = (
+    Region(name="opponent_gender", left=1832, top=56, width=36, height=36),
+    Region(name="player_gender", left=394, top=940, width=36, height=36),
+)
+
 
 def _scale_regions(
     regions: tuple[Region, ...], image_width: int, image_height: int
@@ -49,3 +54,7 @@ def build_status_panel_regions(image_width: int, image_height: int) -> tuple[Reg
 
 def build_name_regions(image_width: int, image_height: int) -> tuple[Region, ...]:
     return _scale_regions(REFERENCE_NAME_REGIONS, image_width, image_height)
+
+
+def build_gender_regions(image_width: int, image_height: int) -> tuple[Region, ...]:
+    return _scale_regions(REFERENCE_GENDER_REGIONS, image_width, image_height)
