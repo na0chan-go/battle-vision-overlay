@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scene",
+    "timestamp",
+    "player_active",
+    "opponent_active"
+  ],
+  "properties": {
+    "scene": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "player_active": {
+      "$ref": "#/$defs/activePokemon"
+    },
+    "opponent_active": {
+      "$ref": "#/$defs/activePokemon"
+    }
+  },
+  "$defs": {
+    "activePokemon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "species_id",
+        "display_name",
+        "gender",
+        "form",
+        "mega_state",
+        "confidence"
+      ],
+      "properties": {
+        "species_id": {
+          "type": "integer"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "string"
+        },
+        "form": {
+          "type": "string"
+        },
+        "mega_state": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Overlay",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "player",
+    "opponent",
+    "judgement"
+  ],
+  "properties": {
+    "player": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "display_name",
+        "speed_actual"
+      ],
+      "properties": {
+        "display_name": {
+          "type": "string"
+        },
+        "speed_actual": {
+          "type": "integer"
+        }
+      }
+    },
+    "opponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "display_name",
+        "speed_candidates"
+      ],
+      "properties": {
+        "display_name": {
+          "type": "string"
+        },
+        "speed_candidates": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "judgement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vs_fastest",
+        "vs_neutral",
+        "vs_scarf_fastest",
+        "vs_scarf_neutral"
+      ],
+      "properties": {
+        "vs_fastest": {
+          "type": "string"
+        },
+        "vs_neutral": {
+          "type": "string"
+        },
+        "vs_scarf_fastest": {
+          "type": "string"
+        },
+        "vs_scarf_neutral": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
