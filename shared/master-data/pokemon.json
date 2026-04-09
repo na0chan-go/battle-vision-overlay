@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "species_id": "garchomp",
+    "display_name": "ガブリアス"
+  },
+  {
+    "species_id": "meowstic",
+    "display_name": "ニャオニクス"
+  },
+  {
+    "species_id": "basculegion",
+    "display_name": "イダイトウ"
+  },
+  {
+    "species_id": "gholdengo",
+    "display_name": "サーフゴー"
+  },
+  {
+    "species_id": "greninja",
+    "display_name": "ゲッコウガ"
+  },
+  {
+    "species_id": "excadrill",
+    "display_name": "ドリュウズ"
+  },
+  {
+    "species_id": "hydrapple",
+    "display_name": "カミツオロチ"
+  }
+]
