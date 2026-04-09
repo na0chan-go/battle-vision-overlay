@@ -35,8 +35,8 @@ func healthzHandler(w http.ResponseWriter, _ *http.Request) {
 func speedTestHandler(w http.ResponseWriter, r *http.Request) {
 	baseSpeedText := r.URL.Query().Get("base_speed")
 	baseSpeed, err := strconv.Atoi(baseSpeedText)
-	if err != nil || baseSpeed <= 0 {
-		http.Error(w, `{"error":"base_speed must be a positive integer"}`, http.StatusBadRequest)
+	if err != nil || !speed.IsValidBaseSpeed(baseSpeed) {
+		http.Error(w, `{"error":"base_speed must be an integer between 1 and 255"}`, http.StatusBadRequest)
 		return
 	}
 

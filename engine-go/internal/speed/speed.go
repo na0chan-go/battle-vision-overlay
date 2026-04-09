@@ -6,6 +6,7 @@ const (
 	level        = 50
 	fixedIV      = 31
 	maxSpeedEV   = 252
+	MaxBaseSpeed = 255
 	natureFast   = 1.1
 	natureNormal = 1.0
 	scarfScale   = 1.5
@@ -28,7 +29,7 @@ type SpeedCandidates struct {
 }
 
 func CalcSpeedStat(baseSpeed int, ev int, nature float64) int {
-	if baseSpeed <= 0 || ev < 0 || nature <= 0 {
+	if !IsValidBaseSpeed(baseSpeed) || ev < 0 || nature <= 0 {
 		return 0
 	}
 
@@ -37,7 +38,7 @@ func CalcSpeedStat(baseSpeed int, ev int, nature float64) int {
 }
 
 func BuildSpeedCandidates(baseSpeed int) SpeedCandidates {
-	if baseSpeed <= 0 {
+	if !IsValidBaseSpeed(baseSpeed) {
 		return SpeedCandidates{}
 	}
 
@@ -58,4 +59,8 @@ func applyScarf(speed int) int {
 	}
 
 	return int(math.Floor(float64(speed) * scarfScale))
+}
+
+func IsValidBaseSpeed(baseSpeed int) bool {
+	return baseSpeed > 0 && baseSpeed <= MaxBaseSpeed
 }

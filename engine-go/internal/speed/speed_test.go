@@ -33,6 +33,13 @@ func TestCalcSpeedStat(t *testing.T) {
 			nature:    1.1,
 			want:      0,
 		},
+		{
+			name:      "too large base speed",
+			baseSpeed: 256,
+			ev:        252,
+			nature:    1.1,
+			want:      0,
+		},
 	}
 
 	for _, tt := range tests {
@@ -89,6 +96,11 @@ func TestBuildSpeedCandidates(t *testing.T) {
 		{
 			name:      "invalid base speed",
 			baseSpeed: -1,
+			want:      SpeedCandidates{},
+		},
+		{
+			name:      "too large base speed",
+			baseSpeed: 999999999,
 			want:      SpeedCandidates{},
 		},
 	}
