@@ -82,6 +82,7 @@ PYTHONPATH=vision-py/src python3 -m vision.main --image assets/samples/battle_sa
 ```
 
 JSON で確認したい場合は `--json` を付けます。前処理後画像は `assets/debug/` に保存されます。
+OCR バックエンドは Python-only の `easyocr` を利用します。
 
 OCR の生文字列をポケモン名辞書へ照合する PoC は以下です。
 

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-import json
-import subprocess
+import os
+import warnings
 from dataclasses import dataclass
-from importlib.resources import files
+from functools import lru_cache
 from pathlib import Path
+
+import certifi
+import easyocr
 
 
 class OCRRuntimeError(RuntimeError):
@@ -17,46 +20,49 @@ class OCRResult:
     confidence: float
 
 
-def _ocr_script_path() -> Path:
-    return Path(files("vision.ocr").joinpath("vision_ocr.swift"))
+def _configure_ssl_certificates() -> None:
+    cert_path = certifi.where()
+    os.environ.setdefault("SSL_CERT_FILE", cert_path)
+    os.environ.setdefault("REQUESTS_CA_BUNDLE", cert_path)
+
+
+@lru_cache(maxsize=1)
+def _get_reader() -> easyocr.Reader:
+    _configure_ssl_certificates()
+    try:
+        warnings.filterwarnings(
+            "ignore",
+            message=".*pin_memory.*MPS.*",
+            category=UserWarning,
+        )
+        return easyocr.Reader(["ja", "en"], gpu=False, verbose=False)
+    except Exception as exc:  # pragma: no cover - library/runtime failure path
+        raise OCRRuntimeError(f"failed to initialize easyocr: {exc}") from exc
 
 
 def recognize_text(image_path: Path) -> OCRResult:
-    command = ["swift", str(_ocr_script_path()), str(image_path)]
     try:
-        completed = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except FileNotFoundError as exc:
-        raise OCRRuntimeError("swift command is not available") from exc
+        reader = _get_reader()
+        results = reader.readtext(str(image_path), detail=1, paragraph=False)
+    except OCRRuntimeError:
+        raise
+    except Exception as exc:  # pragma: no cover - library/runtime failure path
+        raise OCRRuntimeError(f"easyocr failed: {exc}") from exc
 
-    if completed.returncode != 0:
-        message = completed.stderr.strip() or completed.stdout.strip() or "swift vision ocr failed"
-        raise OCRRuntimeError(message)
-
-    try:
-        payload = json.loads(completed.stdout)
-    except json.JSONDecodeError as exc:
-        raise OCRRuntimeError("swift vision ocr returned invalid json") from exc
-
-    if payload.get("error"):
-        raise OCRRuntimeError(str(payload["error"]))
-
-    entries = payload.get("texts", [])
-    if not isinstance(entries, list):
-        raise OCRRuntimeError("swift vision ocr returned invalid texts payload")
-
-    if not entries:
+    if not results:
         return OCRResult(text="", confidence=0.0)
 
-    top_entry = entries[0]
-    if not isinstance(top_entry, dict):
-        raise OCRRuntimeError("swift vision ocr returned invalid text entry")
+    texts = [str(entry[1]).strip() for entry in results if len(entry) >= 2 and str(entry[1]).strip()]
+    if not texts:
+        return OCRResult(text="", confidence=0.0)
+
+    confidences = [
+        float(entry[2])
+        for entry in results
+        if len(entry) >= 3
+    ]
 
     return OCRResult(
-        text=str(top_entry.get("text", "")).strip(),
-        confidence=float(top_entry.get("confidence", 0.0)),
+        text="".join(texts),
+        confidence=max(confidences, default=0.0),
     )
