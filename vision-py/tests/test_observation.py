@@ -103,7 +103,9 @@ class ObservationTest(unittest.TestCase):
 
         self.assertEqual(payload["scene"], "battle")
         self.assertEqual(payload["timestamp"], 1710000000)
+        self.assertIsInstance(payload["timestamp"], int)
         self.assertEqual(payload["player_active"]["species_id"], "gholdengo")
+        self.assertIsInstance(payload["player_active"]["species_id"], str)
         self.assertEqual(payload["opponent_active"]["gender"], "male")
 
     def test_build_battle_observation_includes_both_active_slots(self) -> None:
