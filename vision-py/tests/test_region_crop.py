@@ -248,6 +248,29 @@ class RegionCropTest(unittest.TestCase):
             self.assertEqual(results["opponent_name"].raw_text, "ドリュウズ")
             self.assertIsNone(results["opponent_name"].error)
 
+    def test_extract_name_texts_clears_error_when_final_variant_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            image_path = tmp_path / "battle_sample.png"
+            output_dir = tmp_path / "debug"
+            self.create_sample_image(image_path)
+
+            with mock.patch(
+                "vision.name_ocr.recognize_text",
+                side_effect=[
+                    OCRResult(text="ドリュウズ", confidence=0.95),
+                    OCRRuntimeError("temporary ocr failure"),
+                    OCRRuntimeError("temporary ocr failure"),
+                    OCRResult(text="ゲッコウガ", confidence=0.9),
+                    OCRResult(text="ゲッコウガ", confidence=0.8),
+                    OCRResult(text="ゲッコウガ", confidence=0.7),
+                ],
+            ):
+                results = extract_name_texts(image_path, output_dir)
+
+            self.assertEqual(results["opponent_name"].raw_text, "ドリュウズ")
+            self.assertIsNone(results["opponent_name"].error)
+
 
 if __name__ == "__main__":
     unittest.main()

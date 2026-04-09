@@ -71,6 +71,7 @@ def extract_name_texts(image_path: Path, output_dir: Path) -> dict[str, NameOCRR
                 error = "ocr backend failed"
         else:
             raw_text = best_result.text or "unknown"
+            error = None
 
         results[region.name] = NameOCRResult(
             region_name=region.name,
