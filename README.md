@@ -74,3 +74,19 @@ PYTHONPATH=vision-py/src python3 -m vision.main --image assets/samples/battle_sa
 ```
 
 `--image` は必須です。出力先は省略時に実行ディレクトリ基準の `assets/debug/` になります。
+
+名前領域の OCR PoC は以下で実行できます。
+
+```sh
+PYTHONPATH=vision-py/src python3 -m vision.main --image assets/samples/battle_sample.jpeg --ocr-names
+```
+
+JSON で確認したい場合は `--json` を付けます。前処理後画像は `assets/debug/` に保存されます。
+
+OCR の生文字列をポケモン名辞書へ照合する PoC は以下です。
+
+```sh
+PYTHONPATH=vision-py/src python3 -m vision.main --image assets/samples/battle_sample.jpeg --ocr-names --resolve-names
+```
+
+辞書データは `shared/master-data/pokemon.json` を参照します。

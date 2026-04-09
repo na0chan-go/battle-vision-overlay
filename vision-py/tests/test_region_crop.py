@@ -6,10 +6,13 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from PIL import Image, ImageDraw
 
 from vision.capture.loader import load_image
+from vision.name_ocr import extract_name_texts
+from vision.ocr.engine import OCRResult, OCRRuntimeError
 from vision.poc import extract_regions
 from vision.regions.battle import build_status_panel_regions
 
@@ -114,6 +117,50 @@ class RegionCropTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 2)
         self.assertIn("--image", result.stderr)
+
+    def test_extract_name_texts_saves_debug_images(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            image_path = tmp_path / "battle_sample.png"
+            output_dir = tmp_path / "debug"
+            self.create_sample_image(image_path)
+
+            with mock.patch(
+                "vision.name_ocr.recognize_text",
+                side_effect=[
+                    OCRResult(text="ドリュウズ", confidence=0.9),
+                    OCRResult(text="ドリュウズ", confidence=0.8),
+                    OCRResult(text="ドリュウズ", confidence=0.7),
+                    OCRResult(text="ゲッコウガ", confidence=0.9),
+                    OCRResult(text="ゲッコウガ", confidence=0.8),
+                    OCRResult(text="ゲッコウガ", confidence=0.7),
+                ],
+            ):
+                results = extract_name_texts(image_path, output_dir)
+
+            self.assertEqual(set(results.keys()), {"opponent_name", "player_name"})
+            self.assertEqual(results["opponent_name"].raw_text, "ドリュウズ")
+            self.assertTrue(results["opponent_name"].crop_path.exists())
+            self.assertTrue(results["opponent_name"].preprocessed_path.exists())
+            self.assertTrue(results["player_name"].crop_path.exists())
+            self.assertTrue(results["player_name"].preprocessed_path.exists())
+
+    def test_extract_name_texts_returns_unknown_on_ocr_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            image_path = tmp_path / "battle_sample.png"
+            output_dir = tmp_path / "debug"
+            self.create_sample_image(image_path)
+
+            with mock.patch(
+                "vision.name_ocr.recognize_text",
+                side_effect=OCRRuntimeError("ocr backend failed"),
+            ):
+                results = extract_name_texts(image_path, output_dir)
+
+            self.assertEqual(results["opponent_name"].raw_text, "unknown")
+            self.assertEqual(results["player_name"].raw_text, "unknown")
+            self.assertEqual(results["opponent_name"].error, "ocr backend failed")
 
 
 if __name__ == "__main__":
