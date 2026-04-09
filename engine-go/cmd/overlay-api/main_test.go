@@ -7,8 +7,6 @@ import (
 )
 
 func TestLoadDexUsesFirstAvailableCandidate(t *testing.T) {
-	t.Parallel()
-
 	originalCandidates := masterDataPathCandidates
 	t.Cleanup(func() {
 		masterDataPathCandidates = originalCandidates
@@ -39,8 +37,6 @@ func TestLoadDexUsesFirstAvailableCandidate(t *testing.T) {
 }
 
 func TestLoadDexReturnsErrorWhenAllCandidatesFail(t *testing.T) {
-	t.Parallel()
-
 	originalCandidates := masterDataPathCandidates
 	t.Cleanup(func() {
 		masterDataPathCandidates = originalCandidates
