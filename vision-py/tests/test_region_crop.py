@@ -11,10 +11,18 @@ from unittest import mock
 from PIL import Image, ImageDraw
 
 from vision.capture.loader import load_image
+from vision.gender import (
+    GenderClassificationResult,
+    classify_gender_symbol,
+    extract_gender_marks,
+)
+from vision.main import build_active_payload
+from vision.match.pokemon import PokemonNameMatchResult
+from vision.name_match import ResolvedNameResult
 from vision.name_ocr import extract_name_texts
 from vision.ocr.engine import OCRResult, OCRRuntimeError
 from vision.poc import extract_regions
-from vision.regions.battle import build_status_panel_regions
+from vision.regions.battle import build_gender_regions, build_status_panel_regions
 
 
 class RegionCropTest(unittest.TestCase):
@@ -27,6 +35,11 @@ class RegionCropTest(unittest.TestCase):
                     (region.left, region.top, region.right, region.bottom),
                     radius=18,
                     fill=(90, 80, 210) if region.name == "opponent_status_panel" else (220, 60, 140),
+                )
+            for region in build_gender_regions(*size):
+                draw.ellipse(
+                    (region.left, region.top, region.right, region.bottom),
+                    fill=(20, 100, 250) if region.name == "opponent_gender" else (245, 70, 80),
                 )
         image.save(image_path)
 
@@ -184,6 +197,98 @@ class RegionCropTest(unittest.TestCase):
             self.assertTrue(results["opponent_name"].preprocessed_path.exists())
             self.assertTrue(results["player_name"].crop_path.exists())
             self.assertTrue(results["player_name"].preprocessed_path.exists())
+
+    def test_extract_gender_marks_saves_debug_images(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            image_path = tmp_path / "battle_sample.png"
+            output_dir = tmp_path / "debug"
+            self.create_sample_image(image_path)
+
+            results = extract_gender_marks(image_path, output_dir)
+
+            self.assertEqual(set(results.keys()), {"opponent_gender", "player_gender"})
+            self.assertEqual(results["opponent_gender"].gender, "male")
+            self.assertEqual(results["player_gender"].gender, "female")
+            self.assertTrue(results["opponent_gender"].crop_path.exists())
+            self.assertTrue(results["player_gender"].crop_path.exists())
+
+    def test_classify_gender_symbol_handles_unknown(self) -> None:
+        image = Image.new("RGB", (36, 36), color=(120, 120, 120))
+
+        gender, score, male_score, female_score = classify_gender_symbol(image)
+
+        self.assertEqual(gender, "unknown")
+        self.assertEqual(score, 0.0)
+        self.assertEqual(male_score, 0.0)
+        self.assertEqual(female_score, 0.0)
+
+    def test_build_active_payload_includes_gender(self) -> None:
+        ocr_results = {
+            "opponent_name": mock.Mock(
+                raw_text="ニャオニクス",
+                crop_path=Path("assets/debug/opponent_name.png"),
+                preprocessed_path=Path("assets/debug/opponent_name_preprocessed.png"),
+                error=None,
+            ),
+            "player_name": mock.Mock(
+                raw_text="サーフゴー",
+                crop_path=Path("assets/debug/player_name.png"),
+                preprocessed_path=Path("assets/debug/player_name_preprocessed.png"),
+                error=None,
+            ),
+        }
+        gender_results = {
+            "opponent_gender": GenderClassificationResult(
+                region_name="opponent_gender",
+                crop_path=Path("assets/debug/opponent_gender.png"),
+                gender="female",
+                score=0.92,
+                male_score=10.0,
+                female_score=120.0,
+            ),
+            "player_gender": GenderClassificationResult(
+                region_name="player_gender",
+                crop_path=Path("assets/debug/player_gender.png"),
+                gender="unknown",
+                score=0.0,
+                male_score=0.0,
+                female_score=0.0,
+            ),
+        }
+        resolved_results = {
+            "opponent_name": ResolvedNameResult(
+                raw_result=ocr_results["opponent_name"],
+                match_result=PokemonNameMatchResult(
+                    raw_text="ニャオニクス",
+                    matched=True,
+                    species_id="meowstic",
+                    display_name="ニャオニクス",
+                    score=1.0,
+                ),
+            ),
+            "player_name": ResolvedNameResult(
+                raw_result=ocr_results["player_name"],
+                match_result=PokemonNameMatchResult(
+                    raw_text="サーフゴー",
+                    matched=True,
+                    species_id="gholdengo",
+                    display_name="サーフゴー",
+                    score=1.0,
+                ),
+            ),
+        }
+
+        payload = build_active_payload(
+            ocr_results,
+            gender_results,
+            resolved_results,
+        )
+
+        self.assertEqual(payload["opponent_active"]["gender"], "female")
+        self.assertEqual(payload["opponent_active"]["species_id"], "meowstic")
+        self.assertEqual(payload["player_active"]["gender"], "unknown")
+        self.assertEqual(payload["player_active"]["display_name"], "サーフゴー")
 
     def test_extract_name_texts_returns_unknown_on_ocr_failure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
