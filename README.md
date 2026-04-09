@@ -73,4 +73,4 @@ curl "http://localhost:8080/speed-test?base_speed=102"
 PYTHONPATH=vision-py/src python3 -m vision.main
 ```
 
-入力画像は `assets/samples/battle_sample.png`、出力先は `assets/debug/` です。
+入力画像は `assets/samples/battle_sample.jpeg`、出力先は `assets/debug/` です。

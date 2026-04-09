@@ -19,7 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--image",
         type=Path,
-        default=root / "assets" / "samples" / "battle_sample.png",
+        default=root / "assets" / "samples" / "battle_sample.jpeg",
         help="source battle image path",
     )
     parser.add_argument(
