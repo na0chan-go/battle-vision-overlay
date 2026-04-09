@@ -62,6 +62,7 @@ def extract_name_texts(image_path: Path, output_dir: Path) -> dict[str, NameOCRR
             ):
                 best_result = ocr_result
                 save_crop(variant.image, preprocessed_path)
+                error = None
 
         if not tried_any_variant or best_result.confidence < 0:
             raw_text = "unknown"

@@ -118,6 +118,46 @@ class RegionCropTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("--image", result.stderr)
 
+    def test_main_crop_mode_does_not_require_easyocr_import(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            image_path = tmp_path / "battle_sample.png"
+            output_dir = tmp_path / "debug"
+            poison_module_dir = tmp_path / "poison"
+            poison_module_dir.mkdir()
+            (poison_module_dir / "easyocr.py").write_text(
+                'raise ImportError("easyocr is intentionally unavailable for this test")\n',
+                encoding="utf-8",
+            )
+            self.create_sample_image(image_path)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "vision.main",
+                    "--image",
+                    str(image_path),
+                    "--output-dir",
+                    str(output_dir),
+                ],
+                cwd=Path(__file__).resolve().parents[2],
+                env={
+                    **os.environ,
+                    "PYTHONPATH": (
+                        f"{poison_module_dir}{os.pathsep}"
+                        f"{Path(__file__).resolve().parents[1] / 'src'}"
+                    ),
+                },
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0)
+            self.assertIn("opponent_status_panel", result.stdout)
+            self.assertIn("player_status_panel", result.stdout)
+
     def test_extract_name_texts_saves_debug_images(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
@@ -161,6 +201,29 @@ class RegionCropTest(unittest.TestCase):
             self.assertEqual(results["opponent_name"].raw_text, "unknown")
             self.assertEqual(results["player_name"].raw_text, "unknown")
             self.assertEqual(results["opponent_name"].error, "ocr backend failed")
+
+    def test_extract_name_texts_clears_error_after_later_success(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            image_path = tmp_path / "battle_sample.png"
+            output_dir = tmp_path / "debug"
+            self.create_sample_image(image_path)
+
+            with mock.patch(
+                "vision.name_ocr.recognize_text",
+                side_effect=[
+                    OCRRuntimeError("temporary ocr failure"),
+                    OCRResult(text="ドリュウズ", confidence=0.9),
+                    OCRResult(text="ドリュウズ", confidence=0.8),
+                    OCRResult(text="ゲッコウガ", confidence=0.9),
+                    OCRResult(text="ゲッコウガ", confidence=0.8),
+                    OCRResult(text="ゲッコウガ", confidence=0.7),
+                ],
+            ):
+                results = extract_name_texts(image_path, output_dir)
+
+            self.assertEqual(results["opponent_name"].raw_text, "ドリュウズ")
+            self.assertIsNone(results["opponent_name"].error)
 
 
 if __name__ == "__main__":

@@ -5,8 +5,6 @@ import json
 import sys
 from pathlib import Path
 
-from vision.name_match import resolve_name_results
-from vision.name_ocr import extract_name_texts
 from vision.poc import extract_regions
 
 
@@ -56,6 +54,9 @@ def main() -> None:
 
     try:
         if args.ocr_names:
+            from vision.name_match import resolve_name_results
+            from vision.name_ocr import extract_name_texts
+
             ocr_results = extract_name_texts(args.image, args.output_dir)
             resolved_results = (
                 resolve_name_results(
