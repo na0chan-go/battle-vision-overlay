@@ -58,3 +58,9 @@ make run-go
 ```sh
 curl http://localhost:8080/healthz
 ```
+
+素早さ候補の確認用 API は以下です。
+
+```sh
+curl "http://localhost:8080/speed-test?base_speed=102"
+```
