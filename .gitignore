@@ -19,3 +19,5 @@ build/
 bin/
 coverage.out
 
+# Vision debug output
+assets/debug/*.png
