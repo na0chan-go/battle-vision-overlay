@@ -64,3 +64,13 @@ curl http://localhost:8080/healthz
 ```sh
 curl "http://localhost:8080/speed-test?base_speed=102"
 ```
+
+## Vision PoC
+
+固定領域の切り出し PoC は以下で実行できます。
+
+```sh
+PYTHONPATH=vision-py/src python3 -m vision.main --image assets/samples/battle_sample.jpeg
+```
+
+`--image` は必須です。出力先は省略時に実行ディレクトリ基準の `assets/debug/` になります。
