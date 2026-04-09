@@ -7,25 +7,20 @@ from pathlib import Path
 from vision.poc import extract_regions
 
 
-def repo_root() -> Path:
-    return Path(__file__).resolve().parents[3]
-
-
 def build_parser() -> argparse.ArgumentParser:
-    root = repo_root()
     parser = argparse.ArgumentParser(
         description="Crop fixed battle-screen status panels for debugging."
     )
     parser.add_argument(
         "--image",
         type=Path,
-        default=root / "assets" / "samples" / "battle_sample.jpeg",
+        required=True,
         help="source battle image path",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=root / "assets" / "debug",
+        default=Path("assets") / "debug",
         help="directory for cropped debug images",
     )
     return parser

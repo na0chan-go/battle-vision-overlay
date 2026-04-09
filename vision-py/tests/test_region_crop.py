@@ -95,6 +95,26 @@ class RegionCropTest(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("vision crop failed", result.stderr)
 
+    def test_main_requires_image_argument(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "vision.main",
+            ],
+            cwd=Path(__file__).resolve().parents[2],
+            env={
+                **os.environ,
+                "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src"),
+            },
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("--image", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
