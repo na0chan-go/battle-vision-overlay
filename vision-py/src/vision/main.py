@@ -12,6 +12,7 @@ def build_active_payload(
     ocr_results: dict[str, object],
     gender_results: dict[str, object],
     resolved_results: dict[str, object] | None,
+    active_metadata: dict[str, object] | None = None,
 ) -> dict[str, dict[str, object]]:
     payload: dict[str, dict[str, object]] = {}
     active_region_map = {
@@ -22,12 +23,15 @@ def build_active_payload(
     for name_region, (active_key, gender_region) in active_region_map.items():
         raw_result = ocr_results[name_region]
         gender_result = gender_results[gender_region]
+        metadata = active_metadata[active_key] if active_metadata else None
         active_payload: dict[str, object] = {
             "raw_text": raw_result.raw_text,
             "name_crop_path": str(raw_result.crop_path),
             "preprocessed_path": str(raw_result.preprocessed_path),
             "gender_crop_path": str(gender_result.crop_path),
             "gender": gender_result.gender,
+            "form": metadata.form if metadata is not None else "unknown",
+            "mega_state": metadata.mega_state if metadata is not None else "base",
             "gender_score": gender_result.score,
             "error": raw_result.error,
         }
@@ -90,6 +94,26 @@ def build_parser() -> argparse.ArgumentParser:
         help="optional path to save the observation JSON",
     )
     parser.add_argument(
+        "--player-form",
+        default="unknown",
+        help="temporary player form value for observation DTO",
+    )
+    parser.add_argument(
+        "--player-mega-state",
+        default="base",
+        help="temporary player mega_state value for observation DTO",
+    )
+    parser.add_argument(
+        "--opponent-form",
+        default="unknown",
+        help="temporary opponent form value for observation DTO",
+    )
+    parser.add_argument(
+        "--opponent-mega-state",
+        default="base",
+        help="temporary opponent mega_state value for observation DTO",
+    )
+    parser.add_argument(
         "--request-overlay",
         action="store_true",
         help="POST the observation DTO to engine-go and print the overlay JSON",
@@ -127,9 +151,23 @@ def main() -> None:
             from vision.gender import extract_gender_marks
             from vision.name_match import resolve_name_results
             from vision.name_ocr import extract_name_texts
-            from vision.observation import build_battle_observation, write_observation_json
+            from vision.observation import (
+                ActivePokemonMetadata,
+                build_battle_observation,
+                write_observation_json,
+            )
             from vision.transport import post_observation, write_overlay_response_json
 
+            active_metadata = {
+                "player_active": ActivePokemonMetadata(
+                    form=args.player_form,
+                    mega_state=args.player_mega_state,
+                ),
+                "opponent_active": ActivePokemonMetadata(
+                    form=args.opponent_form,
+                    mega_state=args.opponent_mega_state,
+                ),
+            }
             ocr_results = extract_name_texts(args.image, args.output_dir)
             gender_results = extract_gender_marks(args.image, args.output_dir)
             should_resolve_names = args.resolve_names or args.emit_observation
@@ -154,12 +192,15 @@ def main() -> None:
             ocr_results,
             gender_results,
             resolved_results,
+            active_metadata,
         )
         if args.emit_observation:
             observation = build_battle_observation(
                 ocr_results,
                 gender_results,
                 resolved_results,
+                player_metadata=active_metadata["player_active"],
+                opponent_metadata=active_metadata["opponent_active"],
             )
             observation_output_path = (
                 args.observation_output
@@ -174,6 +215,8 @@ def main() -> None:
                 ocr_results,
                 gender_results,
                 resolved_results,
+                player_metadata=active_metadata["player_active"],
+                opponent_metadata=active_metadata["opponent_active"],
             )
             try:
                 overlay_response = post_observation(
