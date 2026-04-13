@@ -230,8 +230,10 @@ def match_pokemon_name(
             reason="empty_after_normalize",
         )
 
-    top_candidates = _rank_candidates(normalized_raw_text, entries)[:candidate_limit]
-    best_candidate = top_candidates[0] if top_candidates else None
+    ranked_candidates = _rank_candidates(normalized_raw_text, entries)
+    best_candidate = ranked_candidates[0] if ranked_candidates else None
+    debug_candidate_limit = max(0, candidate_limit)
+    top_candidates = ranked_candidates[:debug_candidate_limit]
 
     if best_candidate is None:
         return PokemonNameMatchResult(

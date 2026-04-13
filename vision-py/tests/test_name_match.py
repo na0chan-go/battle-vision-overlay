@@ -191,6 +191,20 @@ class NameMatchTest(unittest.TestCase):
             self.assertEqual(result.reason, "below_threshold")
             self.assertTrue(result.top_candidates)
 
+    def test_match_pokemon_name_uses_full_ranking_when_candidate_limit_is_zero(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            master_data_path = self.write_master_data(Path(tmp_dir))
+            entries = load_pokemon_name_entries(master_data_path)
+
+            result = match_pokemon_name("ガブリアス", entries, candidate_limit=0)
+
+            self.assertTrue(result.matched)
+            self.assertEqual(result.species_id, "garchomp")
+            self.assertEqual(result.display_name, "ガブリアス")
+            self.assertEqual(result.top_candidates, ())
+
     def test_resolve_pokemon_name_candidates_returns_ranked_matches(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             master_data_path = self.write_master_data(Path(tmp_dir))
