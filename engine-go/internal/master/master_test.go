@@ -141,6 +141,19 @@ func TestResolvePokemonEntry(t *testing.T) {
 			wantOK:     true,
 		},
 		{
+			name: "meowstic female unknown form falls back to female normal",
+			query: ResolveQuery{
+				SpeciesID: "meowstic",
+				Gender:    "female",
+				Form:      UnknownValue,
+				MegaState: BaseMegaState,
+			},
+			wantSpe:    104,
+			wantGender: "female",
+			wantMega:   BaseMegaState,
+			wantOK:     true,
+		},
+		{
 			name: "basculegion female",
 			query: ResolveQuery{
 				SpeciesID: "basculegion",

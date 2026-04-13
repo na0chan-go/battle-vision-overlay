@@ -127,7 +127,7 @@ func resolveCandidates(query ResolveQuery) []ResolveQuery {
 		},
 		{
 			SpeciesID: query.SpeciesID,
-			Gender:    UnknownValue,
+			Gender:    query.Gender,
 			Form:      NormalForm,
 			MegaState: normalizeUnknownMegaState(query.MegaState),
 		},
