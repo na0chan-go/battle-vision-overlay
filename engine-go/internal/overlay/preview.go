@@ -2,6 +2,7 @@ package overlay
 
 import (
 	"github.com/na0chan-go/battle-vision-overlay/engine-go/internal/master"
+	"github.com/na0chan-go/battle-vision-overlay/engine-go/internal/playerconfig"
 	"github.com/na0chan-go/battle-vision-overlay/engine-go/internal/speed"
 )
 
@@ -48,8 +49,8 @@ type PreviewResponse struct {
 	Judgement Judgement       `json:"judgement"`
 }
 
-func BuildPreviewResponse(observation Observation, dex *master.Dex) PreviewResponse {
-	playerName, playerSpeed := buildPlayerOverlay(observation.PlayerActive, dex)
+func BuildPreviewResponse(observation Observation, dex *master.Dex, playerSpeeds *playerconfig.SpeedSettings) PreviewResponse {
+	playerName, playerSpeed := buildPlayerOverlay(observation.PlayerActive, dex, playerSpeeds)
 	opponentName, opponentCandidates := buildOpponentOverlay(observation.OpponentActive, dex)
 
 	return PreviewResponse{
@@ -65,13 +66,17 @@ func BuildPreviewResponse(observation Observation, dex *master.Dex) PreviewRespo
 	}
 }
 
-func buildPlayerOverlay(active ActiveObservation, dex *master.Dex) (string, int) {
+func buildPlayerOverlay(active ActiveObservation, dex *master.Dex, playerSpeeds *playerconfig.SpeedSettings) (string, int) {
 	entry, ok := resolveEntry(active, dex)
 	if !ok {
 		return unknownValue, 0
 	}
 
-	return entry.DisplayName, speed.BuildSpeedCandidates(entry.BaseStats.Spe).Fastest
+	if setting, ok := resolvePlayerSpeedSetting(active, playerSpeeds); ok {
+		return entry.DisplayName, setting.SpeedActual
+	}
+
+	return entry.DisplayName, buildPlayerSpeedFallback(entry)
 }
 
 func buildOpponentOverlay(active ActiveObservation, dex *master.Dex) (string, speed.SpeedCandidates) {
@@ -136,4 +141,21 @@ func resolveEntry(active ActiveObservation, dex *master.Dex) (master.PokemonEntr
 		entry.DisplayName = unknownValue
 	}
 	return entry, true
+}
+
+func resolvePlayerSpeedSetting(active ActiveObservation, playerSpeeds *playerconfig.SpeedSettings) (playerconfig.SpeedEntry, bool) {
+	if active.SpeciesID == "" || active.SpeciesID == unknownValue {
+		return playerconfig.SpeedEntry{}, false
+	}
+
+	return playerSpeeds.Resolve(playerconfig.ResolveQuery{
+		SpeciesID: active.SpeciesID,
+		Gender:    active.Gender,
+		Form:      active.Form,
+		MegaState: active.MegaState,
+	})
+}
+
+func buildPlayerSpeedFallback(entry master.PokemonEntry) int {
+	return speed.BuildSpeedCandidates(entry.BaseStats.Spe).Fastest
 }
