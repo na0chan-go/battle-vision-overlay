@@ -20,7 +20,6 @@ bin/
 coverage.out
 
 # Vision debug output
-assets/debug/*.png
-assets/debug/**/*.png
-assets/debug/**/*.json
-assets/debug/validation_report.json
+assets/debug/**
+!assets/debug/
+!assets/debug/.gitkeep
