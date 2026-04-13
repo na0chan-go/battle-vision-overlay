@@ -102,6 +102,16 @@ func TestResolveSpeedSettings(t *testing.T) {
 			wantOK: true,
 		},
 		{
+			name: "missing variant does not fall back to species only",
+			query: ResolveQuery{
+				SpeciesID: "meowstic",
+				Gender:    "male",
+				Form:      master.NormalForm,
+				MegaState: master.BaseMegaState,
+			},
+			wantOK: false,
+		},
+		{
 			name: "missing species",
 			query: ResolveQuery{
 				SpeciesID: "missing",

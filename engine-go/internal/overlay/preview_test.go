@@ -138,6 +138,61 @@ func TestBuildPreviewResponseUsesMegaEntry(t *testing.T) {
 	}
 }
 
+func TestBuildPreviewResponseDoesNotUseBaseSettingForMissingMegaConfig(t *testing.T) {
+	t.Parallel()
+
+	dex := master.NewDex([]master.PokemonEntry{
+		{
+			SpeciesID:   "garchomp",
+			DisplayName: "ガブリアス",
+			Gender:      master.UnknownValue,
+			Form:        master.NormalForm,
+			MegaState:   master.BaseMegaState,
+			BaseStats:   master.BaseStats{Spe: 102},
+		},
+		{
+			SpeciesID:   "garchomp",
+			DisplayName: "ガブリアス",
+			Gender:      master.UnknownValue,
+			Form:        master.NormalForm,
+			MegaState:   "mega",
+			BaseStats:   master.BaseStats{Spe: 92},
+		},
+	})
+	playerSpeeds := playerconfig.NewSpeedSettings([]playerconfig.SpeedEntry{
+		{
+			SpeciesID:   "garchomp",
+			Gender:      master.UnknownValue,
+			Form:        master.UnknownValue,
+			MegaState:   master.BaseMegaState,
+			SpeedActual: 154,
+		},
+	})
+
+	response := BuildPreviewResponse(
+		Observation{
+			PlayerActive: ActiveObservation{
+				SpeciesID: "garchomp",
+				Gender:    master.UnknownValue,
+				Form:      master.NormalForm,
+				MegaState: "mega",
+			},
+			OpponentActive: ActiveObservation{
+				SpeciesID: "garchomp",
+				Gender:    master.UnknownValue,
+				Form:      master.NormalForm,
+				MegaState: master.BaseMegaState,
+			},
+		},
+		dex,
+		playerSpeeds,
+	)
+
+	if response.Player.SpeedActual != 158 {
+		t.Fatalf("player speed_actual = %d, want mega fastest fallback %d", response.Player.SpeedActual, 158)
+	}
+}
+
 func TestBuildPreviewResponseFallsBackToFastestWithoutPlayerSetting(t *testing.T) {
 	t.Parallel()
 

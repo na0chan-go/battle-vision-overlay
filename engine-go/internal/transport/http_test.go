@@ -36,7 +36,7 @@ func TestOverlayPreviewHandlerReturnsOverlayDTO(t *testing.T) {
 		{
 			SpeciesID:   "gholdengo",
 			Gender:      master.UnknownValue,
-			Form:        master.NormalForm,
+			Form:        master.UnknownValue,
 			MegaState:   master.BaseMegaState,
 			SpeedActual: 123,
 		},

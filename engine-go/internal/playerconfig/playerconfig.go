@@ -112,9 +112,6 @@ func resolveCandidates(query ResolveQuery) []ResolveQuery {
 			Form:      master.UnknownValue,
 			MegaState: query.MegaState,
 		},
-		{
-			SpeciesID: query.SpeciesID,
-		},
 	}
 }
 
