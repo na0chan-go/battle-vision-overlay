@@ -150,6 +150,55 @@ func TestBuildPreviewResponseUsesMegaEntry(t *testing.T) {
 	}
 }
 
+func TestBuildPreviewResponseDoesNotOverwriteUnknownMetadataFromFallbackEntry(t *testing.T) {
+	t.Parallel()
+
+	dex := master.NewDex([]master.PokemonEntry{
+		{
+			SpeciesID:   "meowstic",
+			DisplayName: "ニャオニクス",
+			Gender:      "male",
+			Form:        master.NormalForm,
+			MegaState:   master.BaseMegaState,
+			BaseStats:   master.BaseStats{Spe: 104},
+		},
+		{
+			SpeciesID:   "meowstic",
+			DisplayName: "ニャオニクス",
+			Gender:      "female",
+			Form:        master.NormalForm,
+			MegaState:   master.BaseMegaState,
+			BaseStats:   master.BaseStats{Spe: 104},
+		},
+	})
+
+	response := BuildPreviewResponse(
+		Observation{
+			PlayerActive: ActiveObservation{
+				SpeciesID: "meowstic",
+				Gender:    master.UnknownValue,
+				Form:      master.UnknownValue,
+				MegaState: master.BaseMegaState,
+			},
+			OpponentActive: ActiveObservation{
+				SpeciesID: "meowstic",
+				Gender:    master.UnknownValue,
+				Form:      master.UnknownValue,
+				MegaState: master.BaseMegaState,
+			},
+		},
+		dex,
+		playerconfig.NewEmptySpeedSettings(),
+	)
+
+	if response.Player.Gender != master.UnknownValue || response.Player.Form != master.UnknownValue || response.Player.MegaState != master.BaseMegaState {
+		t.Fatalf("player metadata = gender:%q form:%q mega_state:%q, want unknown/unknown/base", response.Player.Gender, response.Player.Form, response.Player.MegaState)
+	}
+	if response.Opponent.Gender != master.UnknownValue || response.Opponent.Form != master.UnknownValue || response.Opponent.MegaState != master.BaseMegaState {
+		t.Fatalf("opponent metadata = gender:%q form:%q mega_state:%q, want unknown/unknown/base", response.Opponent.Gender, response.Opponent.Form, response.Opponent.MegaState)
+	}
+}
+
 func TestBuildPreviewResponseDoesNotUseBaseSettingForMissingMegaConfig(t *testing.T) {
 	t.Parallel()
 

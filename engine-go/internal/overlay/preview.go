@@ -80,9 +80,9 @@ func buildPlayerOverlay(active ActiveObservation, dex *master.Dex, playerSpeeds 
 
 	player := PlayerOverlay{
 		DisplayName: entry.DisplayName,
-		Gender:      entry.Gender,
-		Form:        entry.Form,
-		MegaState:   entry.MegaState,
+		Gender:      observedMetadata(active.Gender),
+		Form:        observedMetadata(active.Form),
+		MegaState:   observedMetadata(active.MegaState),
 		SpeedActual: buildPlayerSpeedFallback(entry),
 	}
 	if setting, ok := resolvePlayerSpeedSetting(active, playerSpeeds); ok {
@@ -106,9 +106,9 @@ func buildOpponentOverlay(active ActiveObservation, dex *master.Dex) OpponentOve
 
 	return OpponentOverlay{
 		DisplayName:     entry.DisplayName,
-		Gender:          entry.Gender,
-		Form:            entry.Form,
-		MegaState:       entry.MegaState,
+		Gender:          observedMetadata(active.Gender),
+		Form:            observedMetadata(active.Form),
+		MegaState:       observedMetadata(active.MegaState),
 		SpeedCandidates: speed.BuildSpeedCandidates(entry.BaseStats.Spe),
 	}
 }
@@ -183,4 +183,11 @@ func resolvePlayerSpeedSetting(active ActiveObservation, playerSpeeds *playercon
 
 func buildPlayerSpeedFallback(entry master.PokemonEntry) int {
 	return speed.BuildSpeedCandidates(entry.BaseStats.Spe).Fastest
+}
+
+func observedMetadata(value string) string {
+	if value == "" {
+		return unknownValue
+	}
+	return value
 }

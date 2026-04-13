@@ -89,14 +89,14 @@ func TestOverlayPreviewHandlerReturnsOverlayDTO(t *testing.T) {
 	if payload.Player.SpeedActual != 123 {
 		t.Fatalf("player speed_actual = %d, want %d", payload.Player.SpeedActual, 123)
 	}
-	if payload.Player.Gender != master.UnknownValue || payload.Player.Form != master.NormalForm || payload.Player.MegaState != master.BaseMegaState {
-		t.Fatalf("player metadata = gender:%q form:%q mega_state:%q, want unknown/normal/base", payload.Player.Gender, payload.Player.Form, payload.Player.MegaState)
+	if payload.Player.Gender != master.UnknownValue || payload.Player.Form != master.UnknownValue || payload.Player.MegaState != master.BaseMegaState {
+		t.Fatalf("player metadata = gender:%q form:%q mega_state:%q, want unknown/unknown/base", payload.Player.Gender, payload.Player.Form, payload.Player.MegaState)
 	}
 	if payload.Opponent.SpeedCandidates.Fastest != 169 {
 		t.Fatalf("opponent fastest = %d, want %d", payload.Opponent.SpeedCandidates.Fastest, 169)
 	}
-	if payload.Opponent.Gender != master.UnknownValue || payload.Opponent.Form != master.NormalForm || payload.Opponent.MegaState != master.BaseMegaState {
-		t.Fatalf("opponent metadata = gender:%q form:%q mega_state:%q, want unknown/normal/base", payload.Opponent.Gender, payload.Opponent.Form, payload.Opponent.MegaState)
+	if payload.Opponent.Gender != "male" || payload.Opponent.Form != master.UnknownValue || payload.Opponent.MegaState != master.BaseMegaState {
+		t.Fatalf("opponent metadata = gender:%q form:%q mega_state:%q, want male/unknown/base", payload.Opponent.Gender, payload.Opponent.Form, payload.Opponent.MegaState)
 	}
 	if payload.Judgement.VsFastest != "lose" {
 		t.Fatalf("vs_fastest = %q, want %q", payload.Judgement.VsFastest, "lose")
