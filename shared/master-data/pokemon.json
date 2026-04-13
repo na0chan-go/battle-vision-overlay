@@ -2,36 +2,111 @@
   {
     "species_id": "garchomp",
     "display_name": "ガブリアス",
-    "base_speed": 102
+    "gender": "unknown",
+    "form": "normal",
+    "mega_state": "base",
+    "base_stats": {
+      "spe": 102
+    }
+  },
+  {
+    "species_id": "garchomp",
+    "display_name": "ガブリアス",
+    "gender": "unknown",
+    "form": "normal",
+    "mega_state": "mega",
+    "base_stats": {
+      "spe": 92
+    }
   },
   {
     "species_id": "meowstic",
     "display_name": "ニャオニクス",
-    "base_speed": 104
+    "gender": "male",
+    "form": "normal",
+    "mega_state": "base",
+    "base_stats": {
+      "spe": 104
+    }
+  },
+  {
+    "species_id": "meowstic",
+    "display_name": "ニャオニクス",
+    "gender": "female",
+    "form": "normal",
+    "mega_state": "base",
+    "base_stats": {
+      "spe": 104
+    }
   },
   {
     "species_id": "basculegion",
     "display_name": "イダイトウ",
-    "base_speed": 78
+    "gender": "male",
+    "form": "normal",
+    "mega_state": "base",
+    "base_stats": {
+      "spe": 78
+    }
+  },
+  {
+    "species_id": "basculegion",
+    "display_name": "イダイトウ",
+    "gender": "female",
+    "form": "normal",
+    "mega_state": "base",
+    "base_stats": {
+      "spe": 78
+    }
   },
   {
     "species_id": "gholdengo",
     "display_name": "サーフゴー",
-    "base_speed": 84
+    "gender": "unknown",
+    "form": "normal",
+    "mega_state": "base",
+    "base_stats": {
+      "spe": 84
+    }
   },
   {
     "species_id": "greninja",
     "display_name": "ゲッコウガ",
-    "base_speed": 122
+    "gender": "unknown",
+    "form": "normal",
+    "mega_state": "base",
+    "base_stats": {
+      "spe": 122
+    }
+  },
+  {
+    "species_id": "greninja",
+    "display_name": "ゲッコウガ",
+    "gender": "unknown",
+    "form": "normal",
+    "mega_state": "mega",
+    "base_stats": {
+      "spe": 132
+    }
   },
   {
     "species_id": "excadrill",
     "display_name": "ドリュウズ",
-    "base_speed": 88
+    "gender": "unknown",
+    "form": "normal",
+    "mega_state": "base",
+    "base_stats": {
+      "spe": 88
+    }
   },
   {
     "species_id": "hydrapple",
     "display_name": "カミツオロチ",
-    "base_speed": 44
+    "gender": "unknown",
+    "form": "normal",
+    "mega_state": "base",
+    "base_stats": {
+      "spe": 44
+    }
   }
 ]

@@ -14,7 +14,7 @@ func TestLoadDexUsesFirstAvailableCandidate(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	masterDataPath := filepath.Join(tmpDir, "pokemon.json")
-	payload := `[{"species_id":"garchomp","display_name":"ガブリアス","base_speed":102}]`
+	payload := `[{"species_id":"garchomp","display_name":"ガブリアス","gender":"unknown","form":"normal","mega_state":"base","base_stats":{"spe":102}}]`
 	if err := os.WriteFile(masterDataPath, []byte(payload), 0o644); err != nil {
 		t.Fatalf("failed to write temp master data: %v", err)
 	}
