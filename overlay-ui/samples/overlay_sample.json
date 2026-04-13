@@ -1,0 +1,21 @@
+{
+  "player": {
+    "display_name": "サーフゴー",
+    "speed_actual": 149
+  },
+  "opponent": {
+    "display_name": "ガブリアス",
+    "speed_candidates": {
+      "fastest": 169,
+      "neutral": 154,
+      "scarf_fastest": 253,
+      "scarf_neutral": 231
+    }
+  },
+  "judgement": {
+    "vs_fastest": "lose",
+    "vs_neutral": "lose",
+    "vs_scarf_fastest": "lose",
+    "vs_scarf_neutral": "lose"
+  }
+}

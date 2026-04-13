@@ -117,3 +117,21 @@ PYTHONPATH=vision-py/src python3 -m vision.main --image assets/samples/battle_sa
 ```
 
 レスポンスは標準出力に pretty JSON で表示され、省略時は `assets/debug/overlay_response.json` にも保存されます。
+
+## Overlay UI PoC
+
+`overlay-ui/web` には、overlay DTO をそのまま表示する最小 UI を用意しています。
+
+まず repo root で静的ファイルサーバーを起動します。
+
+```sh
+python3 -m http.server 4173
+```
+
+その後、ブラウザで以下を開きます。
+
+```text
+http://localhost:4173/overlay-ui/web/
+```
+
+ページを開くと `overlay-ui/samples/overlay_sample.json` を自動読込します。`URL から読む` で任意の overlay JSON を読み込むこともできます。`engine-go` は現在「最新 overlay DTO を GET する専用 API」を持たないため、UI 側では sample JSON と URL 指定の JSON 読み込みを最小導線としています。
