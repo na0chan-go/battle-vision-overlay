@@ -14,10 +14,22 @@
       "additionalProperties": false,
       "required": [
         "display_name",
+        "gender",
+        "form",
+        "mega_state",
         "speed_actual"
       ],
       "properties": {
         "display_name": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "string"
+        },
+        "form": {
+          "type": "string"
+        },
+        "mega_state": {
           "type": "string"
         },
         "speed_actual": {
@@ -30,10 +42,22 @@
       "additionalProperties": false,
       "required": [
         "display_name",
+        "gender",
+        "form",
+        "mega_state",
         "speed_candidates"
       ],
       "properties": {
         "display_name": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "string"
+        },
+        "form": {
+          "type": "string"
+        },
+        "mega_state": {
           "type": "string"
         },
         "speed_candidates": {

@@ -1,20 +1,26 @@
 {
   "player": {
-    "display_name": "サーフゴー",
-    "speed_actual": 149
+    "display_name": "ニャオニクス",
+    "gender": "female",
+    "form": "normal",
+    "mega_state": "base",
+    "speed_actual": 171
   },
   "opponent": {
     "display_name": "ガブリアス",
+    "gender": "unknown",
+    "form": "normal",
+    "mega_state": "mega",
     "speed_candidates": {
-      "fastest": 169,
-      "neutral": 154,
-      "scarf_fastest": 253,
-      "scarf_neutral": 231
+      "fastest": 157,
+      "neutral": 143,
+      "scarf_fastest": 235,
+      "scarf_neutral": 214
     }
   },
   "judgement": {
-    "vs_fastest": "lose",
-    "vs_neutral": "lose",
+    "vs_fastest": "win",
+    "vs_neutral": "win",
     "vs_scarf_fastest": "lose",
     "vs_scarf_neutral": "lose"
   }

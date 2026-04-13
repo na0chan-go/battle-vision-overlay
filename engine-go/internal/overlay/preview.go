@@ -28,11 +28,17 @@ type Observation struct {
 
 type PlayerOverlay struct {
 	DisplayName string `json:"display_name"`
+	Gender      string `json:"gender"`
+	Form        string `json:"form"`
+	MegaState   string `json:"mega_state"`
 	SpeedActual int    `json:"speed_actual"`
 }
 
 type OpponentOverlay struct {
 	DisplayName     string                `json:"display_name"`
+	Gender          string                `json:"gender"`
+	Form            string                `json:"form"`
+	MegaState       string                `json:"mega_state"`
 	SpeedCandidates speed.SpeedCandidates `json:"speed_candidates"`
 }
 
@@ -50,42 +56,61 @@ type PreviewResponse struct {
 }
 
 func BuildPreviewResponse(observation Observation, dex *master.Dex, playerSpeeds *playerconfig.SpeedSettings) PreviewResponse {
-	playerName, playerSpeed := buildPlayerOverlay(observation.PlayerActive, dex, playerSpeeds)
-	opponentName, opponentCandidates := buildOpponentOverlay(observation.OpponentActive, dex)
+	player := buildPlayerOverlay(observation.PlayerActive, dex, playerSpeeds)
+	opponent := buildOpponentOverlay(observation.OpponentActive, dex)
 
 	return PreviewResponse{
-		Player: PlayerOverlay{
-			DisplayName: playerName,
-			SpeedActual: playerSpeed,
-		},
-		Opponent: OpponentOverlay{
-			DisplayName:     opponentName,
-			SpeedCandidates: opponentCandidates,
-		},
-		Judgement: buildJudgement(playerSpeed, opponentCandidates),
+		Player:    player,
+		Opponent:  opponent,
+		Judgement: buildJudgement(player.SpeedActual, opponent.SpeedCandidates),
 	}
 }
 
-func buildPlayerOverlay(active ActiveObservation, dex *master.Dex, playerSpeeds *playerconfig.SpeedSettings) (string, int) {
+func buildPlayerOverlay(active ActiveObservation, dex *master.Dex, playerSpeeds *playerconfig.SpeedSettings) PlayerOverlay {
 	entry, ok := resolveEntry(active, dex)
 	if !ok {
-		return unknownValue, 0
+		return PlayerOverlay{
+			DisplayName: unknownValue,
+			Gender:      unknownValue,
+			Form:        unknownValue,
+			MegaState:   unknownValue,
+			SpeedActual: 0,
+		}
 	}
 
+	player := PlayerOverlay{
+		DisplayName: entry.DisplayName,
+		Gender:      entry.Gender,
+		Form:        entry.Form,
+		MegaState:   entry.MegaState,
+		SpeedActual: buildPlayerSpeedFallback(entry),
+	}
 	if setting, ok := resolvePlayerSpeedSetting(active, playerSpeeds); ok {
-		return entry.DisplayName, setting.SpeedActual
+		player.SpeedActual = setting.SpeedActual
 	}
 
-	return entry.DisplayName, buildPlayerSpeedFallback(entry)
+	return player
 }
 
-func buildOpponentOverlay(active ActiveObservation, dex *master.Dex) (string, speed.SpeedCandidates) {
+func buildOpponentOverlay(active ActiveObservation, dex *master.Dex) OpponentOverlay {
 	entry, ok := resolveEntry(active, dex)
 	if !ok {
-		return unknownValue, speed.SpeedCandidates{}
+		return OpponentOverlay{
+			DisplayName:     unknownValue,
+			Gender:          unknownValue,
+			Form:            unknownValue,
+			MegaState:       unknownValue,
+			SpeedCandidates: speed.SpeedCandidates{},
+		}
 	}
 
-	return entry.DisplayName, speed.BuildSpeedCandidates(entry.BaseStats.Spe)
+	return OpponentOverlay{
+		DisplayName:     entry.DisplayName,
+		Gender:          entry.Gender,
+		Form:            entry.Form,
+		MegaState:       entry.MegaState,
+		SpeedCandidates: speed.BuildSpeedCandidates(entry.BaseStats.Spe),
+	}
 }
 
 func buildJudgement(playerSpeed int, candidates speed.SpeedCandidates) Judgement {

@@ -62,6 +62,9 @@ func TestBuildPreviewResponseKnownPokemon(t *testing.T) {
 	if response.Player.DisplayName != "サーフゴー" {
 		t.Fatalf("player display name = %q, want %q", response.Player.DisplayName, "サーフゴー")
 	}
+	if response.Player.Gender != master.UnknownValue || response.Player.Form != master.NormalForm || response.Player.MegaState != master.BaseMegaState {
+		t.Fatalf("player metadata = gender:%q form:%q mega_state:%q, want unknown/normal/base", response.Player.Gender, response.Player.Form, response.Player.MegaState)
+	}
 	if response.Player.SpeedActual != 123 {
 		t.Fatalf("player speed_actual = %d, want %d", response.Player.SpeedActual, 123)
 	}
@@ -74,6 +77,9 @@ func TestBuildPreviewResponseKnownPokemon(t *testing.T) {
 	}
 	if response.Opponent.SpeedCandidates != wantCandidates {
 		t.Fatalf("opponent speed candidates = %+v, want %+v", response.Opponent.SpeedCandidates, wantCandidates)
+	}
+	if response.Opponent.Gender != master.UnknownValue || response.Opponent.Form != master.NormalForm || response.Opponent.MegaState != master.BaseMegaState {
+		t.Fatalf("opponent metadata = gender:%q form:%q mega_state:%q, want unknown/normal/base", response.Opponent.Gender, response.Opponent.Form, response.Opponent.MegaState)
 	}
 	if response.Judgement.VsFastest != "lose" || response.Judgement.VsNeutral != "lose" {
 		t.Fatalf("unexpected judgement = %+v", response.Judgement)
@@ -133,8 +139,14 @@ func TestBuildPreviewResponseUsesMegaEntry(t *testing.T) {
 	if response.Player.SpeedActual != 140 {
 		t.Fatalf("player speed_actual = %d, want %d", response.Player.SpeedActual, 140)
 	}
+	if response.Player.MegaState != "mega" {
+		t.Fatalf("player mega_state = %q, want %q", response.Player.MegaState, "mega")
+	}
 	if response.Opponent.SpeedCandidates.Fastest != 158 {
 		t.Fatalf("opponent fastest = %d, want %d", response.Opponent.SpeedCandidates.Fastest, 158)
+	}
+	if response.Opponent.MegaState != "mega" {
+		t.Fatalf("opponent mega_state = %q, want %q", response.Opponent.MegaState, "mega")
 	}
 }
 
