@@ -35,6 +35,7 @@ def resolve_name_results(
         match_result = match_pokemon_name(
             ocr_result.raw_text,
             entries,
+            candidate_limit=limit,
         )
         resolved_results[region_name] = ResolvedNameResult(
             raw_result=ocr_result,

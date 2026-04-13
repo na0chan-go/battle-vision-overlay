@@ -43,6 +43,12 @@ def build_active_payload(
                     "species_id": match_result.species_id,
                     "display_name": match_result.display_name,
                     "score": match_result.score,
+                    "normalized_text": match_result.normalized_text,
+                    "reason": match_result.reason,
+                    "top_candidates": [
+                        candidate.to_dict()
+                        for candidate in match_result.top_candidates
+                    ],
                 }
             )
 
@@ -327,6 +333,8 @@ def main() -> None:
                 print(f"{active_key}_species_id: {payload['species_id']}")
                 print(f"{active_key}_display_name: {payload['display_name']}")
                 print(f"{active_key}_score: {payload['score']:.4f}")
+                print(f"{active_key}_normalized: {payload['normalized_text']}")
+                print(f"{active_key}_reason: {payload['reason']}")
         return
 
     for region_name, saved_path in saved_files.items():

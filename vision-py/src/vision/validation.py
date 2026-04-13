@@ -95,6 +95,10 @@ def validate_sample_image(image_path: Path, options: ValidationOptions) -> dict[
                 region_name: result.to_dict()
                 for region_name, result in ocr_results.items()
             },
+            "name_match": {
+                region_name: result.to_dict()
+                for region_name, result in resolved_results.items()
+            },
             "gender": {
                 region_name: result.to_dict()
                 for region_name, result in gender_results.items()
