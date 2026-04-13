@@ -10,7 +10,13 @@ from vision.gender import GenderClassificationResult
 from vision.match.pokemon import PokemonNameMatchResult
 from vision.name_match import ResolvedNameResult
 from vision.name_ocr import NameOCRResult
-from vision.observation import build_battle_observation, write_observation_json
+from vision.observation import (
+    DEFAULT_FORM,
+    DEFAULT_MEGA_STATE,
+    ActivePokemonMetadata,
+    build_battle_observation,
+    write_observation_json,
+)
 
 
 class ObservationTest(unittest.TestCase):
@@ -123,6 +129,31 @@ class ObservationTest(unittest.TestCase):
         self.assertEqual(payload["opponent_active"]["species_id"], "garchomp")
         self.assertEqual(payload["opponent_active"]["gender"], "male")
         self.assertEqual(payload["player_active"]["gender"], "unknown")
+        self.assertEqual(payload["player_active"]["form"], DEFAULT_FORM)
+        self.assertEqual(payload["player_active"]["mega_state"], DEFAULT_MEGA_STATE)
+        self.assertEqual(payload["opponent_active"]["form"], DEFAULT_FORM)
+        self.assertEqual(payload["opponent_active"]["mega_state"], DEFAULT_MEGA_STATE)
+
+    def test_build_battle_observation_allows_form_and_mega_overrides(self) -> None:
+        observation = build_battle_observation(
+            self.make_ocr_results(),
+            self.make_gender_results(),
+            self.make_resolved_results(),
+            timestamp=1710000000,
+            player_metadata=ActivePokemonMetadata(
+                form="unknown",
+                mega_state="mega",
+            ),
+            opponent_metadata=ActivePokemonMetadata(
+                form="normal",
+                mega_state="base",
+            ),
+        )
+
+        self.assertEqual(observation.player_active.form, "unknown")
+        self.assertEqual(observation.player_active.mega_state, "mega")
+        self.assertEqual(observation.opponent_active.form, "normal")
+        self.assertEqual(observation.opponent_active.mega_state, "base")
 
     def test_build_battle_observation_returns_unknown_for_unmatched_name(self) -> None:
         ocr_results = self.make_ocr_results()
