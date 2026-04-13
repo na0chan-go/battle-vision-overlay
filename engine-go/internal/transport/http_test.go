@@ -13,9 +13,23 @@ import (
 func TestOverlayPreviewHandlerReturnsOverlayDTO(t *testing.T) {
 	t.Parallel()
 
-	dex := master.NewDex(map[string]master.PokemonEntry{
-		"gholdengo": {SpeciesID: "gholdengo", DisplayName: "サーフゴー", BaseSpeed: 84},
-		"garchomp":  {SpeciesID: "garchomp", DisplayName: "ガブリアス", BaseSpeed: 102},
+	dex := master.NewDex([]master.PokemonEntry{
+		{
+			SpeciesID:   "gholdengo",
+			DisplayName: "サーフゴー",
+			Gender:      master.UnknownValue,
+			Form:        master.NormalForm,
+			MegaState:   master.BaseMegaState,
+			BaseStats:   master.BaseStats{Spe: 84},
+		},
+		{
+			SpeciesID:   "garchomp",
+			DisplayName: "ガブリアス",
+			Gender:      master.UnknownValue,
+			Form:        master.NormalForm,
+			MegaState:   master.BaseMegaState,
+			BaseStats:   master.BaseStats{Spe: 102},
+		},
 	})
 	mux := NewMux(dex)
 

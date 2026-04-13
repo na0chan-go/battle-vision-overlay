@@ -10,17 +10,39 @@ import (
 func TestBuildPreviewResponseKnownPokemon(t *testing.T) {
 	t.Parallel()
 
-	dex := master.NewDex(map[string]master.PokemonEntry{
-		"gholdengo": {SpeciesID: "gholdengo", DisplayName: "サーフゴー", BaseSpeed: 84},
-		"garchomp":  {SpeciesID: "garchomp", DisplayName: "ガブリアス", BaseSpeed: 102},
+	dex := master.NewDex([]master.PokemonEntry{
+		{
+			SpeciesID:   "gholdengo",
+			DisplayName: "サーフゴー",
+			Gender:      master.UnknownValue,
+			Form:        master.NormalForm,
+			MegaState:   master.BaseMegaState,
+			BaseStats:   master.BaseStats{Spe: 84},
+		},
+		{
+			SpeciesID:   "garchomp",
+			DisplayName: "ガブリアス",
+			Gender:      master.UnknownValue,
+			Form:        master.NormalForm,
+			MegaState:   master.BaseMegaState,
+			BaseStats:   master.BaseStats{Spe: 102},
+		},
 	})
 
 	response := BuildPreviewResponse(
 		Observation{
-			PlayerActive: ActiveObservation{SpeciesID: "gholdengo", DisplayName: "サーフゴー"},
+			PlayerActive: ActiveObservation{
+				SpeciesID: "gholdengo",
+				Gender:    "unknown",
+				Form:      "normal",
+				MegaState: "base",
+			},
 			OpponentActive: ActiveObservation{
 				SpeciesID:   "garchomp",
 				DisplayName: "ガブリアス",
+				Gender:      "unknown",
+				Form:        "normal",
+				MegaState:   "base",
 			},
 		},
 		dex,
@@ -44,6 +66,54 @@ func TestBuildPreviewResponseKnownPokemon(t *testing.T) {
 	}
 	if response.Judgement.VsFastest != "lose" || response.Judgement.VsNeutral != "lose" {
 		t.Fatalf("unexpected judgement = %+v", response.Judgement)
+	}
+}
+
+func TestBuildPreviewResponseUsesMegaEntry(t *testing.T) {
+	t.Parallel()
+
+	dex := master.NewDex([]master.PokemonEntry{
+		{
+			SpeciesID:   "garchomp",
+			DisplayName: "ガブリアス",
+			Gender:      master.UnknownValue,
+			Form:        master.NormalForm,
+			MegaState:   master.BaseMegaState,
+			BaseStats:   master.BaseStats{Spe: 102},
+		},
+		{
+			SpeciesID:   "garchomp",
+			DisplayName: "ガブリアス",
+			Gender:      master.UnknownValue,
+			Form:        master.NormalForm,
+			MegaState:   "mega",
+			BaseStats:   master.BaseStats{Spe: 92},
+		},
+	})
+
+	response := BuildPreviewResponse(
+		Observation{
+			PlayerActive: ActiveObservation{
+				SpeciesID: "garchomp",
+				Gender:    "unknown",
+				Form:      "normal",
+				MegaState: "mega",
+			},
+			OpponentActive: ActiveObservation{
+				SpeciesID: "garchomp",
+				Gender:    "unknown",
+				Form:      "normal",
+				MegaState: "mega",
+			},
+		},
+		dex,
+	)
+
+	if response.Player.SpeedActual != 158 {
+		t.Fatalf("player speed_actual = %d, want %d", response.Player.SpeedActual, 158)
+	}
+	if response.Opponent.SpeedCandidates.Fastest != 158 {
+		t.Fatalf("opponent fastest = %d, want %d", response.Opponent.SpeedCandidates.Fastest, 158)
 	}
 }
 

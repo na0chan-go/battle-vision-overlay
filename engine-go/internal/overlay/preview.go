@@ -7,7 +7,6 @@ import (
 
 const (
 	unknownValue = "unknown"
-	baseState    = "base"
 )
 
 type ActiveObservation struct {
@@ -72,7 +71,7 @@ func buildPlayerOverlay(active ActiveObservation, dex *master.Dex) (string, int)
 		return unknownValue, 0
 	}
 
-	return entry.DisplayName, speed.BuildSpeedCandidates(entry.BaseSpeed).Fastest
+	return entry.DisplayName, speed.BuildSpeedCandidates(entry.BaseStats.Spe).Fastest
 }
 
 func buildOpponentOverlay(active ActiveObservation, dex *master.Dex) (string, speed.SpeedCandidates) {
@@ -81,7 +80,7 @@ func buildOpponentOverlay(active ActiveObservation, dex *master.Dex) (string, sp
 		return unknownValue, speed.SpeedCandidates{}
 	}
 
-	return entry.DisplayName, speed.BuildSpeedCandidates(entry.BaseSpeed)
+	return entry.DisplayName, speed.BuildSpeedCandidates(entry.BaseStats.Spe)
 }
 
 func buildJudgement(playerSpeed int, candidates speed.SpeedCandidates) Judgement {
@@ -120,8 +119,13 @@ func resolveEntry(active ActiveObservation, dex *master.Dex) (master.PokemonEntr
 		return master.PokemonEntry{}, false
 	}
 
-	entry, ok := dex.Lookup(active.SpeciesID)
-	if !ok || !speed.IsValidBaseSpeed(entry.BaseSpeed) {
+	entry, ok := dex.Resolve(master.ResolveQuery{
+		SpeciesID: active.SpeciesID,
+		Gender:    active.Gender,
+		Form:      active.Form,
+		MegaState: active.MegaState,
+	})
+	if !ok || !speed.IsValidBaseSpeed(entry.BaseStats.Spe) {
 		return master.PokemonEntry{}, false
 	}
 
