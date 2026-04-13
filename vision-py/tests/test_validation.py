@@ -178,6 +178,14 @@ class ValidationTest(unittest.TestCase):
             self.assertEqual(saved_report["results"][0]["status"], "failed")
             self.assertEqual(saved_report["results"][1]["file_name"], "ok.jpeg")
             self.assertEqual(saved_report["results"][1]["status"], "success")
+            self.assertEqual(
+                saved_report["results"][1]["name_match"]["player_name"]["normalized_text"],
+                "",
+            )
+            self.assertIn(
+                "top_candidates",
+                saved_report["results"][1]["name_match"]["player_name"],
+            )
 
 
 if __name__ == "__main__":
