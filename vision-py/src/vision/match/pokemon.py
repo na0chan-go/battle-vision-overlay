@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import unicodedata
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
@@ -9,6 +10,7 @@ from pathlib import Path
 DEFAULT_MINIMUM_SCORE = 0.72
 DEFAULT_CANDIDATE_LIMIT = 3
 UNKNOWN_NAME = "unknown"
+_LEVEL_PATTERN = re.compile(r"(?i)(?:Lv|Level)\.?\s*\d+")
 
 
 @dataclass(frozen=True)
@@ -59,7 +61,9 @@ class PokemonNameMatchResult:
 
 def _is_name_character(char: str) -> bool:
     codepoint = ord(char)
-    if char in {"ー", "・", "ヵ", "ヶ", "ゔ", "ヴ"}:
+    if char in {"ー", "・", "ヵ", "ヶ", "ゔ", "ヴ", "♂", "♀"}:
+        return True
+    if char.isascii() and char.isalnum():
         return True
     return (
         0x3040 <= codepoint <= 0x309F
@@ -81,9 +85,10 @@ def _hiragana_to_katakana(value: str) -> str:
 
 def normalize_pokemon_name_text(value: str) -> str:
     normalized = unicodedata.normalize("NFKC", value).strip()
+    normalized = _LEVEL_PATTERN.sub("", normalized)
     without_space = "".join(char for char in normalized if not char.isspace())
     name_only = "".join(char for char in without_space if _is_name_character(char))
-    return _hiragana_to_katakana(name_only)
+    return _hiragana_to_katakana(name_only).upper()
 
 
 def _expand_small_kana(value: str) -> str:

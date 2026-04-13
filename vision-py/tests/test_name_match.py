@@ -22,6 +22,11 @@ class NameMatchTest(unittest.TestCase):
             {"species_id": "basculegion", "display_name": "イダイトウ"},
             {"species_id": "gholdengo", "display_name": "サーフゴー"},
             {"species_id": "greninja", "display_name": "ゲッコウガ"},
+            {"species_id": "porygon", "display_name": "ポリゴン"},
+            {"species_id": "porygon2", "display_name": "ポリゴン2"},
+            {"species_id": "porygonz", "display_name": "ポリゴンZ"},
+            {"species_id": "nidoran_m", "display_name": "ニドラン♂"},
+            {"species_id": "nidoran_f", "display_name": "ニドラン♀"},
         ]
         master_data_path.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2),
@@ -34,13 +39,19 @@ class NameMatchTest(unittest.TestCase):
             master_data_path = self.write_master_data(Path(tmp_dir))
             entries = load_pokemon_name_entries(master_data_path)
 
-            self.assertEqual(len(entries), 5)
+            self.assertEqual(len(entries), 10)
             self.assertEqual(entries[0].display_name, "ガブリアス")
 
     def test_normalize_pokemon_name_text_removes_common_ocr_noise(self) -> None:
         self.assertEqual(
             normalize_pokemon_name_text("  ※さーふごー♂ Lv.50  "),
-            "サーフゴー",
+            "サーフゴー♂",
+        )
+
+    def test_normalize_pokemon_name_text_keeps_meaningful_suffixes(self) -> None:
+        self.assertEqual(
+            normalize_pokemon_name_text("ポリゴン２ / porygon-z"),
+            "ポリゴン2PORYGONZ",
         )
 
     def test_match_pokemon_name_exact_match(self) -> None:
@@ -116,7 +127,43 @@ class NameMatchTest(unittest.TestCase):
             self.assertTrue(result.matched)
             self.assertEqual(result.species_id, "gholdengo")
             self.assertEqual(result.display_name, "サーフゴー")
-            self.assertEqual(result.normalized_text, "サーフゴー")
+            self.assertEqual(result.normalized_text, "サーフゴー♂")
+
+    def test_match_pokemon_name_distinguishes_digit_suffix(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            master_data_path = self.write_master_data(Path(tmp_dir))
+            entries = load_pokemon_name_entries(master_data_path)
+
+            result = match_pokemon_name("ポリゴン2", entries)
+
+            self.assertTrue(result.matched)
+            self.assertEqual(result.species_id, "porygon2")
+            self.assertEqual(result.display_name, "ポリゴン2")
+            self.assertEqual(result.score, 1.0)
+
+    def test_match_pokemon_name_distinguishes_latin_suffix(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            master_data_path = self.write_master_data(Path(tmp_dir))
+            entries = load_pokemon_name_entries(master_data_path)
+
+            result = match_pokemon_name("ポリゴンZ", entries)
+
+            self.assertTrue(result.matched)
+            self.assertEqual(result.species_id, "porygonz")
+            self.assertEqual(result.display_name, "ポリゴンZ")
+            self.assertEqual(result.score, 1.0)
+
+    def test_match_pokemon_name_distinguishes_gender_suffix(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            master_data_path = self.write_master_data(Path(tmp_dir))
+            entries = load_pokemon_name_entries(master_data_path)
+
+            result = match_pokemon_name("ニドラン♀", entries)
+
+            self.assertTrue(result.matched)
+            self.assertEqual(result.species_id, "nidoran_f")
+            self.assertEqual(result.display_name, "ニドラン♀")
+            self.assertEqual(result.score, 1.0)
 
     def test_match_pokemon_name_absorbs_validation_ocr_noise(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
