@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/na0chan-go/battle-vision-overlay/engine-go/internal/master"
+	"github.com/na0chan-go/battle-vision-overlay/engine-go/internal/playerconfig"
 )
 
 func TestOverlayPreviewHandlerReturnsOverlayDTO(t *testing.T) {
@@ -31,7 +32,16 @@ func TestOverlayPreviewHandlerReturnsOverlayDTO(t *testing.T) {
 			BaseStats:   master.BaseStats{Spe: 102},
 		},
 	})
-	mux := NewMux(dex)
+	playerSpeeds := playerconfig.NewSpeedSettings([]playerconfig.SpeedEntry{
+		{
+			SpeciesID:   "gholdengo",
+			Gender:      master.UnknownValue,
+			Form:        master.NormalForm,
+			MegaState:   master.BaseMegaState,
+			SpeedActual: 123,
+		},
+	})
+	mux := NewMux(dex, playerSpeeds)
 
 	requestBody := []byte(`{
 		"scene":"battle",
@@ -70,8 +80,8 @@ func TestOverlayPreviewHandlerReturnsOverlayDTO(t *testing.T) {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if payload.Player.SpeedActual != 149 {
-		t.Fatalf("player speed_actual = %d, want %d", payload.Player.SpeedActual, 149)
+	if payload.Player.SpeedActual != 123 {
+		t.Fatalf("player speed_actual = %d, want %d", payload.Player.SpeedActual, 123)
 	}
 	if payload.Opponent.SpeedCandidates.Fastest != 169 {
 		t.Fatalf("opponent fastest = %d, want %d", payload.Opponent.SpeedCandidates.Fastest, 169)
@@ -84,7 +94,7 @@ func TestOverlayPreviewHandlerReturnsOverlayDTO(t *testing.T) {
 func TestOverlayPreviewHandlerReturnsUnknownForInvalidObservation(t *testing.T) {
 	t.Parallel()
 
-	mux := NewMux(master.NewEmptyDex())
+	mux := NewMux(master.NewEmptyDex(), playerconfig.NewEmptySpeedSettings())
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/overlay/preview", bytes.NewBufferString(`{`))
 	rec := httptest.NewRecorder()
 
