@@ -53,8 +53,12 @@ def classify_validation_status(player_species_id: str, opponent_species_id: str)
     return "failed"
 
 
+def build_image_debug_dir(image_path: Path, debug_root_dir: Path) -> Path:
+    return debug_root_dir / image_path.name
+
+
 def validate_sample_image(image_path: Path, options: ValidationOptions) -> dict[str, object]:
-    image_debug_dir = options.debug_root_dir / image_path.stem
+    image_debug_dir = build_image_debug_dir(image_path, options.debug_root_dir)
 
     try:
         ocr_results = extract_name_texts(image_path, image_debug_dir)

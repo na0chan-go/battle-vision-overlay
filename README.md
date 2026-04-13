@@ -106,7 +106,7 @@ PYTHONPATH=vision-py/src python3 -m vision.main --image assets/samples/battle_sa
 PYTHONPATH=vision-py/src python3 -m vision.main --validate-samples
 ```
 
-`assets/samples/` 配下の `.png` / `.jpg` / `.jpeg` を処理し、画像ごとの debug 出力は `assets/debug/validation/<image_stem>/`、一覧レポートは `assets/debug/validation_report.json` に保存します。簡易ステータスは、2体とも辞書照合できたら `success`、片方だけなら `partial`、両方 unknown または処理失敗なら `failed` です。
+`assets/samples/` 配下の `.png` / `.jpg` / `.jpeg` を処理し、画像ごとの debug 出力は `assets/debug/validation/<image_file_name>/` 相当のディレクトリ、一覧レポートは `assets/debug/validation_report.json` に保存します。簡易ステータスは、2体とも辞書照合できたら `success`、片方だけなら `partial`、両方 unknown または処理失敗なら `failed` です。
 
 ## 最小連携 PoC
 

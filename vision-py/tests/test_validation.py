@@ -15,6 +15,7 @@ from vision.name_ocr import NameOCRResult
 from vision.observation import ActivePokemonMetadata
 from vision.validation import (
     ValidationOptions,
+    build_image_debug_dir,
     classify_validation_status,
     list_sample_images,
     run_sample_validation,
@@ -107,6 +108,16 @@ class ValidationTest(unittest.TestCase):
             images = list_sample_images(samples_dir)
 
             self.assertEqual([path.name for path in images], ["sample.PNG", "sample.jpeg"])
+
+    def test_build_image_debug_dir_includes_extension(self) -> None:
+        debug_root_dir = Path("debug")
+
+        jpg_debug_dir = build_image_debug_dir(Path("battle.jpg"), debug_root_dir)
+        png_debug_dir = build_image_debug_dir(Path("battle.png"), debug_root_dir)
+
+        self.assertEqual(jpg_debug_dir, debug_root_dir / "battle.jpg")
+        self.assertEqual(png_debug_dir, debug_root_dir / "battle.png")
+        self.assertNotEqual(jpg_debug_dir, png_debug_dir)
 
     def test_run_sample_validation_continues_after_image_failure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
