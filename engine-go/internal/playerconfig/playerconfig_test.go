@@ -25,6 +25,20 @@ func TestResolveSpeedSettings(t *testing.T) {
 			SpeedActual: 157,
 		},
 		{
+			SpeciesID:   "excadrill",
+			Gender:      master.UnknownValue,
+			Form:        master.NormalForm,
+			MegaState:   master.BaseMegaState,
+			SpeedActual: 140,
+		},
+		{
+			SpeciesID:   "garchomp",
+			Gender:      master.UnknownValue,
+			Form:        master.NormalForm,
+			MegaState:   master.BaseMegaState,
+			SpeedActual: 154,
+		},
+		{
 			SpeciesID:   "greninja",
 			Gender:      master.UnknownValue,
 			Form:        master.UnknownValue,
@@ -100,6 +114,27 @@ func TestResolveSpeedSettings(t *testing.T) {
 			},
 			want:   157,
 			wantOK: true,
+		},
+		{
+			name: "unknown form falls back to normal form setting",
+			query: ResolveQuery{
+				SpeciesID: "excadrill",
+				Gender:    master.UnknownValue,
+				Form:      master.UnknownValue,
+				MegaState: master.BaseMegaState,
+			},
+			want:   140,
+			wantOK: true,
+		},
+		{
+			name: "unknown form fallback does not cross mega state",
+			query: ResolveQuery{
+				SpeciesID: "garchomp",
+				Gender:    master.UnknownValue,
+				Form:      master.UnknownValue,
+				MegaState: "mega",
+			},
+			wantOK: false,
 		},
 		{
 			name: "missing variant does not fall back to species only",

@@ -2,35 +2,35 @@
   {
     "species_id": "gholdengo",
     "gender": "unknown",
-    "form": "unknown",
+    "form": "normal",
     "mega_state": "base",
     "speed_actual": 136
   },
   {
     "species_id": "garchomp",
     "gender": "unknown",
-    "form": "unknown",
+    "form": "normal",
     "mega_state": "base",
     "speed_actual": 154
   },
   {
     "species_id": "greninja",
     "gender": "unknown",
-    "form": "unknown",
+    "form": "normal",
     "mega_state": "base",
     "speed_actual": 174
   },
   {
     "species_id": "greninja",
     "gender": "unknown",
-    "form": "unknown",
+    "form": "normal",
     "mega_state": "mega",
     "speed_actual": 184
   },
   {
     "species_id": "excadrill",
     "gender": "unknown",
-    "form": "unknown",
+    "form": "normal",
     "mega_state": "base",
     "speed_actual": 140
   }

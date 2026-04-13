@@ -92,7 +92,7 @@ func (s *SpeedSettings) find(query ResolveQuery) (SpeedEntry, bool) {
 }
 
 func resolveCandidates(query ResolveQuery) []ResolveQuery {
-	return []ResolveQuery{
+	candidates := []ResolveQuery{
 		query,
 		{
 			SpeciesID: query.SpeciesID,
@@ -100,19 +100,41 @@ func resolveCandidates(query ResolveQuery) []ResolveQuery {
 			Form:      query.Form,
 			MegaState: query.MegaState,
 		},
-		{
+	}
+
+	if query.Form == master.UnknownValue {
+		candidates = append(candidates,
+			ResolveQuery{
+				SpeciesID: query.SpeciesID,
+				Gender:    query.Gender,
+				Form:      master.NormalForm,
+				MegaState: query.MegaState,
+			},
+			ResolveQuery{
+				SpeciesID: query.SpeciesID,
+				Gender:    master.UnknownValue,
+				Form:      master.NormalForm,
+				MegaState: query.MegaState,
+			},
+		)
+	}
+
+	candidates = append(candidates,
+		ResolveQuery{
 			SpeciesID: query.SpeciesID,
 			Gender:    query.Gender,
 			Form:      master.UnknownValue,
 			MegaState: query.MegaState,
 		},
-		{
+		ResolveQuery{
 			SpeciesID: query.SpeciesID,
 			Gender:    master.UnknownValue,
 			Form:      master.UnknownValue,
 			MegaState: query.MegaState,
 		},
-	}
+	)
+
+	return candidates
 }
 
 func normalizeEntry(entry SpeedEntry) SpeedEntry {
