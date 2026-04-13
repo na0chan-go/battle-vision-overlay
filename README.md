@@ -100,6 +100,14 @@ PYTHONPATH=vision-py/src python3 -m vision.main --image assets/samples/battle_sa
 
 出力ファイルは省略時に `assets/debug/observation.json` です。
 
+複数サンプル画像の一括検証は以下です。
+
+```sh
+PYTHONPATH=vision-py/src python3 -m vision.main --validate-samples
+```
+
+`assets/samples/` 配下の `.png` / `.jpg` / `.jpeg` を処理し、画像ごとの debug 出力は `assets/debug/validation/<image_stem>/`、一覧レポートは `assets/debug/validation_report.json` に保存します。簡易ステータスは、2体とも辞書照合できたら `success`、片方だけなら `partial`、両方 unknown または処理失敗なら `failed` です。
+
 ## 最小連携 PoC
 
 `vision-py` から `engine-go` へ observation DTO を POST し、overlay DTO を受け取る最小連携は以下です。

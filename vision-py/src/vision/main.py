@@ -58,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--image",
         type=Path,
-        required=True,
+        default=None,
         help="source battle image path",
     )
     parser.add_argument(
@@ -135,19 +135,63 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("shared") / "master-data" / "pokemon.json",
         help="pokemon master data path for name matching",
     )
+    parser.add_argument(
+        "--validate-samples",
+        action="store_true",
+        help="run the OCR validation pipeline for all sample images",
+    )
+    parser.add_argument(
+        "--samples-dir",
+        type=Path,
+        default=Path("assets") / "samples",
+        help="directory containing sample images for validation",
+    )
+    parser.add_argument(
+        "--validation-report",
+        type=Path,
+        default=None,
+        help="optional path to save the validation report JSON",
+    )
     return parser
 
 
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+    if not args.validate_samples and args.image is None:
+        parser.error("--image is required unless --validate-samples is used")
     if args.emit_observation and not args.ocr_names:
         parser.error("--emit-observation requires --ocr-names")
     if args.request_overlay and not args.ocr_names:
         parser.error("--request-overlay requires --ocr-names")
 
     try:
-        if args.ocr_names:
+        if args.validate_samples:
+            from vision.observation import ActivePokemonMetadata
+            from vision.validation import ValidationOptions, run_sample_validation
+
+            validation_report_path = (
+                args.validation_report
+                if args.validation_report is not None
+                else args.output_dir / "validation_report.json"
+            )
+            report = run_sample_validation(
+                ValidationOptions(
+                    samples_dir=args.samples_dir,
+                    debug_root_dir=args.output_dir / "validation",
+                    report_path=validation_report_path,
+                    master_data_path=args.master_data,
+                    player_metadata=ActivePokemonMetadata(
+                        form=args.player_form,
+                        mega_state=args.player_mega_state,
+                    ),
+                    opponent_metadata=ActivePokemonMetadata(
+                        form=args.opponent_form,
+                        mega_state=args.opponent_mega_state,
+                    ),
+                )
+            )
+        elif args.ocr_names:
             from vision.gender import extract_gender_marks
             from vision.name_match import resolve_name_results
             from vision.name_ocr import extract_name_texts
@@ -183,9 +227,39 @@ def main() -> None:
         else:
             saved_files = extract_regions(args.image, args.output_dir)
     except (FileNotFoundError, ValueError) as exc:
-        task_name = "vision ocr" if args.ocr_names else "vision crop"
+        if args.validate_samples:
+            task_name = "vision validation"
+        else:
+            task_name = "vision ocr" if args.ocr_names else "vision crop"
         print(f"{task_name} failed: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
+
+    if args.validate_samples:
+        summary = report["summary"]
+        print(
+            "validation summary: "
+            f"total={summary['total']} "
+            f"success={summary['success']} "
+            f"partial={summary['partial']} "
+            f"failed={summary['failed']}"
+        )
+        report_path = (
+            args.validation_report
+            if args.validation_report is not None
+            else args.output_dir / "validation_report.json"
+        )
+        print(f"validation_report: {report_path}")
+        for result in report["results"]:
+            player_active = result["player_active"]
+            opponent_active = result["opponent_active"]
+            print(
+                f"{result['file_name']}: {result['status']} "
+                f"player={player_active['display_name']}({player_active['gender']}) "
+                f"opponent={opponent_active['display_name']}({opponent_active['gender']})"
+            )
+            if result["error_message"]:
+                print(f"{result['file_name']}_error: {result['error_message']}")
+        return
 
     if args.ocr_names:
         active_payload = build_active_payload(
