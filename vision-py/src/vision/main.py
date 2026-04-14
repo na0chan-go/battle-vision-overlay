@@ -28,6 +28,8 @@ def build_active_payload(
             "raw_text": raw_result.raw_text,
             "name_crop_path": str(raw_result.crop_path),
             "preprocessed_path": str(raw_result.preprocessed_path),
+            "preprocess_name": getattr(raw_result, "preprocess_name", None),
+            "ocr_confidence": getattr(raw_result, "ocr_confidence", 0.0),
             "gender_crop_path": str(gender_result.crop_path),
             "gender": gender_result.gender,
             "form": metadata.form if metadata is not None else "unknown",
@@ -323,6 +325,8 @@ def main() -> None:
             print(f"{active_key}_raw: {payload['raw_text']}")
             print(f"{active_key}_name_crop: {payload['name_crop_path']}")
             print(f"{active_key}_preprocessed: {payload['preprocessed_path']}")
+            print(f"{active_key}_preprocess_name: {payload['preprocess_name']}")
+            print(f"{active_key}_ocr_confidence: {payload['ocr_confidence']:.4f}")
             print(f"{active_key}_gender_crop: {payload['gender_crop_path']}")
             print(f"{active_key}_gender: {payload['gender']}")
             print(f"{active_key}_gender_score: {payload['gender_score']:.4f}")
