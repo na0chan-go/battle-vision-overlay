@@ -8,6 +8,7 @@ from PIL import Image
 
 from vision.capture.loader import load_image
 from vision.debug.crop_debug import crop_region, save_crop
+from vision.dto.region import Region
 from vision.regions.battle import build_gender_regions
 
 _MIN_ACTIVE_SCORE = 120.0
@@ -41,6 +42,7 @@ class GenderClassificationResult:
     score: float
     male_score: float
     female_score: float
+    region: Region | None = None
     active_score: float = 0.0
     threshold: float = _MIN_ACTIVE_SCORE
     margin: float = 0.0
@@ -49,6 +51,7 @@ class GenderClassificationResult:
     def to_dict(self) -> dict[str, object]:
         return {
             "crop_path": str(self.crop_path),
+            "region": self.region.to_dict() if self.region is not None else None,
             "gender": self.gender,
             "predicted_gender": self.gender,
             "score": self.score,
@@ -165,6 +168,7 @@ def extract_gender_marks(
             score=decision.score,
             male_score=decision.male_score,
             female_score=decision.female_score,
+            region=region,
             active_score=decision.active_score,
             threshold=decision.threshold,
             margin=decision.margin,
