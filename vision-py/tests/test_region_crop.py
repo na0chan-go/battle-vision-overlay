@@ -420,6 +420,29 @@ class RegionCropTest(unittest.TestCase):
             self.assertEqual(results["player_name"].raw_text, "unknown")
             self.assertEqual(results["opponent_name"].error, "ocr backend failed")
 
+    def test_extract_name_texts_keeps_empty_ocr_result_as_non_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            image_path = tmp_path / "battle_sample.png"
+            output_dir = tmp_path / "debug"
+            self.create_sample_image(image_path)
+
+            with mock.patch(
+                "vision.name_ocr.recognize_text",
+                return_value=OCRResult(text="", confidence=0.0),
+            ):
+                results = extract_name_texts(image_path, output_dir)
+
+            self.assertEqual(results["opponent_name"].raw_text, "unknown")
+            self.assertIsNone(results["opponent_name"].error)
+            self.assertTrue(results["opponent_name"].preprocess_candidates)
+            self.assertTrue(
+                all(
+                    candidate.error is None
+                    for candidate in results["opponent_name"].preprocess_candidates
+                )
+            )
+
     def test_extract_name_texts_clears_error_after_later_success(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)

@@ -138,7 +138,8 @@ def extract_name_texts(image_path: Path, output_dir: Path) -> dict[str, NameOCRR
         best_candidate = select_best_ocr_candidate(tuple(candidates))
         if not tried_any_variant or best_candidate is None:
             raw_text = "unknown"
-            if error is None:
+            has_successful_ocr_call = any(candidate.error is None for candidate in candidates)
+            if not has_successful_ocr_call and error is None:
                 error = "ocr backend failed"
         else:
             raw_text = best_candidate.raw_text or "unknown"
