@@ -178,6 +178,10 @@ class ValidationTest(unittest.TestCase):
             self.assertEqual(saved_report["results"][0]["status"], "failed")
             self.assertEqual(saved_report["results"][1]["file_name"], "ok.jpeg")
             self.assertEqual(saved_report["results"][1]["status"], "success")
+            self.assertEqual(saved_report["results"][1]["image_width"], 1920)
+            self.assertEqual(saved_report["results"][1]["image_height"], 1080)
+            self.assertIn("opponent_name", saved_report["results"][1]["resolved_regions"])
+            self.assertIn("player_gender", saved_report["results"][1]["resolved_regions"])
             self.assertEqual(
                 saved_report["results"][1]["name_match"]["player_name"]["normalized_text"],
                 "",

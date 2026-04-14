@@ -28,7 +28,12 @@ from vision.name_ocr import (
 from vision.ocr.engine import OCRResult, OCRRuntimeError
 from vision.poc import extract_regions
 from vision.preprocess.text import NamePreprocessConfig, preprocess_name_images
-from vision.regions.battle import build_gender_regions, build_status_panel_regions
+from vision.regions.battle import (
+    build_active_recognition_region_payload,
+    build_gender_regions,
+    build_name_regions,
+    build_status_panel_regions,
+)
 
 
 class RegionCropTest(unittest.TestCase):
@@ -94,15 +99,52 @@ class RegionCropTest(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             load_image(Path("missing-sample.png"))
 
-    def test_extract_name_regions_rejects_small_image(self) -> None:
+    def test_extract_regions_scales_for_smaller_image(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
             image_path = tmp_path / "small.png"
             output_dir = tmp_path / "debug"
-            self.create_sample_image(image_path, size=(320, 180))
+            image_size = (960, 540)
+            self.create_sample_image(image_path, size=image_size)
 
-            with self.assertRaises(ValueError):
-                extract_regions(image_path, output_dir)
+            saved_files = extract_regions(image_path, output_dir)
+            regions = build_status_panel_regions(*image_size)
+
+            self.assertEqual(set(saved_files.keys()), {"opponent_status_panel", "player_status_panel"})
+            for region in regions:
+                with Image.open(saved_files[region.name]) as cropped:
+                    self.assertEqual(cropped.size, (region.width, region.height))
+
+    def test_name_and_gender_regions_scale_from_reference_resolution(self) -> None:
+        image_size = (960, 540)
+
+        name_regions = build_name_regions(*image_size)
+        gender_regions = build_gender_regions(*image_size)
+        region_payload = build_active_recognition_region_payload(*image_size)
+
+        self.assertEqual(name_regions[0].name, "opponent_name")
+        self.assertEqual(name_regions[0].left, 795)
+        self.assertEqual(name_regions[0].top, 27)
+        self.assertEqual(name_regions[0].width, 105)
+        self.assertEqual(name_regions[0].height, 25)
+        self.assertEqual(gender_regions[1].name, "player_gender")
+        self.assertEqual(gender_regions[1].left, 197)
+        self.assertEqual(gender_regions[1].top, 470)
+        self.assertEqual(gender_regions[1].width, 18)
+        self.assertEqual(gender_regions[1].height, 18)
+        self.assertIn("opponent_name", region_payload)
+        self.assertEqual(region_payload["opponent_name"]["right"], 900)
+
+    def test_regions_keep_minimum_size_for_tiny_image(self) -> None:
+        regions = build_gender_regions(1, 1)
+
+        for region in regions:
+            self.assertEqual(region.width, 1)
+            self.assertEqual(region.height, 1)
+
+    def test_regions_reject_non_positive_image_size(self) -> None:
+        with self.assertRaises(ValueError):
+            build_name_regions(0, 1080)
 
     def test_main_reports_missing_sample(self) -> None:
         result = subprocess.run(

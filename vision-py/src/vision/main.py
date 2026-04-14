@@ -27,10 +27,20 @@ def build_active_payload(
         active_payload: dict[str, object] = {
             "raw_text": raw_result.raw_text,
             "name_crop_path": str(raw_result.crop_path),
+            "name_region": (
+                raw_result.region.to_dict()
+                if getattr(raw_result, "region", None) is not None
+                else None
+            ),
             "preprocessed_path": str(raw_result.preprocessed_path),
             "preprocess_name": getattr(raw_result, "preprocess_name", None),
             "ocr_confidence": getattr(raw_result, "ocr_confidence", 0.0),
             "gender_crop_path": str(gender_result.crop_path),
+            "gender_region": (
+                gender_result.region.to_dict()
+                if getattr(gender_result, "region", None) is not None
+                else None
+            ),
             "gender": gender_result.gender,
             "form": metadata.form if metadata is not None else "unknown",
             "mega_state": metadata.mega_state if metadata is not None else "base",
@@ -324,10 +334,12 @@ def main() -> None:
         for active_key, payload in active_payload.items():
             print(f"{active_key}_raw: {payload['raw_text']}")
             print(f"{active_key}_name_crop: {payload['name_crop_path']}")
+            print(f"{active_key}_name_region: {payload['name_region']}")
             print(f"{active_key}_preprocessed: {payload['preprocessed_path']}")
             print(f"{active_key}_preprocess_name: {payload['preprocess_name']}")
             print(f"{active_key}_ocr_confidence: {payload['ocr_confidence']:.4f}")
             print(f"{active_key}_gender_crop: {payload['gender_crop_path']}")
+            print(f"{active_key}_gender_region: {payload['gender_region']}")
             print(f"{active_key}_gender: {payload['gender']}")
             print(f"{active_key}_gender_score: {payload['gender_score']:.4f}")
             if payload["error"] is not None:

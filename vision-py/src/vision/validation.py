@@ -4,6 +4,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from vision.capture.loader import load_image
 from vision.gender import extract_gender_marks
 from vision.name_match import resolve_name_results
 from vision.name_ocr import extract_name_texts
@@ -12,6 +13,7 @@ from vision.observation import (
     build_battle_observation,
     write_observation_json,
 )
+from vision.regions.battle import build_active_recognition_region_payload
 
 SUPPORTED_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg"})
 UNKNOWN_SPECIES_ID = "unknown"
@@ -61,6 +63,9 @@ def validate_sample_image(image_path: Path, options: ValidationOptions) -> dict[
     image_debug_dir = build_image_debug_dir(image_path, options.debug_root_dir)
 
     try:
+        image = load_image(image_path)
+        image_width, image_height = image.size
+        resolved_regions = build_active_recognition_region_payload(image_width, image_height)
         ocr_results = extract_name_texts(image_path, image_debug_dir)
         gender_results = extract_gender_marks(image_path, image_debug_dir)
         resolved_results = resolve_name_results(
@@ -87,6 +92,9 @@ def validate_sample_image(image_path: Path, options: ValidationOptions) -> dict[
             "file_name": image_path.name,
             "status": status,
             "error_message": None,
+            "image_width": image_width,
+            "image_height": image_height,
+            "resolved_regions": resolved_regions,
             "debug_dir": str(image_debug_dir),
             "observation_path": str(observation_path),
             "player_active": observation_payload["player_active"],
@@ -109,6 +117,9 @@ def validate_sample_image(image_path: Path, options: ValidationOptions) -> dict[
             "file_name": image_path.name,
             "status": "failed",
             "error_message": str(exc),
+            "image_width": None,
+            "image_height": None,
+            "resolved_regions": {},
             "debug_dir": str(image_debug_dir),
             "observation_path": None,
             "player_active": {

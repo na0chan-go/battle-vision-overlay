@@ -7,6 +7,7 @@ from shutil import copyfile
 
 from vision.capture.loader import load_image
 from vision.debug.crop_debug import crop_region, save_crop
+from vision.dto.region import Region
 from vision.ocr.engine import OCRRuntimeError, recognize_text
 from vision.preprocess.text import preprocess_name_images
 from vision.regions.battle import build_name_regions
@@ -36,6 +37,7 @@ class NameOCRResult:
     crop_path: Path
     preprocessed_path: Path
     raw_text: str
+    region: Region | None = None
     error: str | None = None
     preprocess_name: str | None = None
     ocr_confidence: float = 0.0
@@ -44,6 +46,7 @@ class NameOCRResult:
     def to_dict(self) -> dict[str, object]:
         return {
             "crop_path": str(self.crop_path),
+            "region": self.region.to_dict() if self.region is not None else None,
             "preprocessed_path": str(self.preprocessed_path),
             "raw_text": self.raw_text,
             "error": self.error,
@@ -151,6 +154,7 @@ def extract_name_texts(image_path: Path, output_dir: Path) -> dict[str, NameOCRR
         results[region.name] = NameOCRResult(
             region_name=region.name,
             crop_path=crop_path,
+            region=region,
             preprocessed_path=preprocessed_path,
             raw_text=raw_text,
             error=error,
