@@ -443,6 +443,33 @@ class RegionCropTest(unittest.TestCase):
                 )
             )
 
+    def test_extract_name_texts_clears_error_when_empty_ocr_succeeds_later(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            image_path = tmp_path / "battle_sample.png"
+            output_dir = tmp_path / "debug"
+            self.create_sample_image(image_path)
+
+            with mock.patch(
+                "vision.name_ocr.recognize_text",
+                side_effect=lambda path: (
+                    self.raise_temporary_ocr_failure()
+                    if Path(path).name == "opponent_name_raw_crop.png"
+                    else OCRResult(text="", confidence=0.0)
+                ),
+            ):
+                results = extract_name_texts(image_path, output_dir)
+
+            self.assertEqual(results["opponent_name"].raw_text, "unknown")
+            self.assertIsNone(results["opponent_name"].error)
+            self.assertTrue(results["opponent_name"].preprocess_candidates[0].error)
+            self.assertTrue(
+                any(
+                    candidate.error is None
+                    for candidate in results["opponent_name"].preprocess_candidates
+                )
+            )
+
     def test_extract_name_texts_clears_error_after_later_success(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
