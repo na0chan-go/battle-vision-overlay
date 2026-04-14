@@ -12,10 +12,25 @@ from vision.regions.battle import build_gender_regions
 
 _MIN_ACTIVE_SCORE = 120.0
 _MIN_DOMINANT_RATIO = 0.7
+_MIN_SCORE_MARGIN = 0.25
+_MIN_PIXEL_COLOR_SCORE = 0.25
+_MIN_PIXEL_VALUE = 0.2
 _MALE_HUE_MIN = 0.52
 _MALE_HUE_MAX = 0.72
 _FEMALE_HUE_MAX = 0.06
 _FEMALE_HUE_MIN = 0.90
+
+
+@dataclass(frozen=True)
+class GenderClassificationDecision:
+    gender: str
+    score: float
+    male_score: float
+    female_score: float
+    active_score: float
+    threshold: float
+    margin: float
+    reason: str
 
 
 @dataclass(frozen=True)
@@ -26,18 +41,27 @@ class GenderClassificationResult:
     score: float
     male_score: float
     female_score: float
+    active_score: float = 0.0
+    threshold: float = _MIN_ACTIVE_SCORE
+    margin: float = 0.0
+    reason: str = "not_recorded"
 
     def to_dict(self) -> dict[str, object]:
         return {
             "crop_path": str(self.crop_path),
             "gender": self.gender,
+            "predicted_gender": self.gender,
             "score": self.score,
             "male_score": self.male_score,
             "female_score": self.female_score,
+            "active_score": self.active_score,
+            "threshold": self.threshold,
+            "margin": self.margin,
+            "reason": self.reason,
         }
 
 
-def classify_gender_symbol(image: Image.Image) -> tuple[str, float, float, float]:
+def classify_gender_symbol_detail(image: Image.Image) -> GenderClassificationDecision:
     male_score = 0.0
     female_score = 0.0
 
@@ -54,7 +78,7 @@ def classify_gender_symbol(image: Image.Image) -> tuple[str, float, float, float
                 blue / 255.0,
             )
             color_score = saturation * value
-            if color_score < 0.25 or value < 0.2:
+            if color_score < _MIN_PIXEL_COLOR_SCORE or value < _MIN_PIXEL_VALUE:
                 continue
 
             if _MALE_HUE_MIN <= hue <= _MALE_HUE_MAX:
@@ -64,15 +88,60 @@ def classify_gender_symbol(image: Image.Image) -> tuple[str, float, float, float
 
     active_score = male_score + female_score
     if active_score < _MIN_ACTIVE_SCORE:
-        return "unknown", 0.0, male_score, female_score
+        return GenderClassificationDecision(
+            gender="unknown",
+            score=0.0,
+            male_score=male_score,
+            female_score=female_score,
+            active_score=active_score,
+            threshold=_MIN_ACTIVE_SCORE,
+            margin=0.0,
+            reason="score_below_threshold",
+        )
 
     dominant_score = max(male_score, female_score)
     dominant_ratio = dominant_score / active_score
+    margin = abs(male_score - female_score) / active_score
+    if margin < _MIN_SCORE_MARGIN:
+        return GenderClassificationDecision(
+            gender="unknown",
+            score=dominant_ratio,
+            male_score=male_score,
+            female_score=female_score,
+            active_score=active_score,
+            threshold=_MIN_SCORE_MARGIN,
+            margin=margin,
+            reason="score_too_close",
+        )
+
     if dominant_ratio < _MIN_DOMINANT_RATIO:
-        return "unknown", dominant_ratio, male_score, female_score
+        return GenderClassificationDecision(
+            gender="unknown",
+            score=dominant_ratio,
+            male_score=male_score,
+            female_score=female_score,
+            active_score=active_score,
+            threshold=_MIN_DOMINANT_RATIO,
+            margin=margin,
+            reason="dominant_ratio_below_threshold",
+        )
 
     gender = "male" if male_score > female_score else "female"
-    return gender, dominant_ratio, male_score, female_score
+    return GenderClassificationDecision(
+        gender=gender,
+        score=dominant_ratio,
+        male_score=male_score,
+        female_score=female_score,
+        active_score=active_score,
+        threshold=_MIN_DOMINANT_RATIO,
+        margin=margin,
+        reason=f"{gender}_above_threshold",
+    )
+
+
+def classify_gender_symbol(image: Image.Image) -> tuple[str, float, float, float]:
+    decision = classify_gender_symbol_detail(image)
+    return decision.gender, decision.score, decision.male_score, decision.female_score
 
 
 def extract_gender_marks(
@@ -88,14 +157,18 @@ def extract_gender_marks(
         crop_path = output_dir / f"{region.name}.png"
         save_crop(cropped, crop_path)
 
-        gender, score, male_score, female_score = classify_gender_symbol(cropped)
+        decision = classify_gender_symbol_detail(cropped)
         results[region.name] = GenderClassificationResult(
             region_name=region.name,
             crop_path=crop_path,
-            gender=gender,
-            score=score,
-            male_score=male_score,
-            female_score=female_score,
+            gender=decision.gender,
+            score=decision.score,
+            male_score=decision.male_score,
+            female_score=decision.female_score,
+            active_score=decision.active_score,
+            threshold=decision.threshold,
+            margin=decision.margin,
+            reason=decision.reason,
         )
 
     return results
