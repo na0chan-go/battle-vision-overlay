@@ -14,6 +14,7 @@ from vision.capture.loader import load_image
 from vision.gender import (
     GenderClassificationResult,
     classify_gender_symbol,
+    classify_gender_symbol_detail,
     extract_gender_marks,
 )
 from vision.main import build_active_payload
@@ -212,6 +213,33 @@ class RegionCropTest(unittest.TestCase):
             self.assertEqual(results["player_gender"].gender, "female")
             self.assertTrue(results["opponent_gender"].crop_path.exists())
             self.assertTrue(results["player_gender"].crop_path.exists())
+            self.assertEqual(results["opponent_gender"].reason, "male_above_threshold")
+            self.assertEqual(results["player_gender"].reason, "female_above_threshold")
+
+            serialized = results["opponent_gender"].to_dict()
+            self.assertIn("predicted_gender", serialized)
+            self.assertIn("active_score", serialized)
+            self.assertIn("threshold", serialized)
+            self.assertIn("margin", serialized)
+            self.assertIn("reason", serialized)
+
+    def test_classify_gender_symbol_detail_detects_clear_male(self) -> None:
+        image = Image.new("RGB", (36, 36), color=(20, 100, 250))
+
+        result = classify_gender_symbol_detail(image)
+
+        self.assertEqual(result.gender, "male")
+        self.assertGreaterEqual(result.score, 0.7)
+        self.assertEqual(result.reason, "male_above_threshold")
+
+    def test_classify_gender_symbol_detail_detects_clear_female(self) -> None:
+        image = Image.new("RGB", (36, 36), color=(245, 70, 80))
+
+        result = classify_gender_symbol_detail(image)
+
+        self.assertEqual(result.gender, "female")
+        self.assertGreaterEqual(result.score, 0.7)
+        self.assertEqual(result.reason, "female_above_threshold")
 
     def test_classify_gender_symbol_handles_unknown(self) -> None:
         image = Image.new("RGB", (36, 36), color=(120, 120, 120))
@@ -222,6 +250,27 @@ class RegionCropTest(unittest.TestCase):
         self.assertEqual(score, 0.0)
         self.assertEqual(male_score, 0.0)
         self.assertEqual(female_score, 0.0)
+
+    def test_classify_gender_symbol_detail_reports_unknown_reason(self) -> None:
+        image = Image.new("RGB", (36, 36), color=(120, 120, 120))
+
+        result = classify_gender_symbol_detail(image)
+
+        self.assertEqual(result.gender, "unknown")
+        self.assertEqual(result.reason, "score_below_threshold")
+        self.assertEqual(result.threshold, 120.0)
+
+    def test_classify_gender_symbol_detail_returns_unknown_when_scores_are_close(self) -> None:
+        image = Image.new("RGB", (36, 36), color=(120, 120, 120))
+        draw = ImageDraw.Draw(image)
+        draw.rectangle((0, 0, 17, 35), fill=(20, 100, 250))
+        draw.rectangle((18, 0, 35, 35), fill=(245, 70, 80))
+
+        result = classify_gender_symbol_detail(image)
+
+        self.assertEqual(result.gender, "unknown")
+        self.assertEqual(result.reason, "score_too_close")
+        self.assertLess(result.margin, 0.25)
 
     def test_build_active_payload_includes_gender(self) -> None:
         ocr_results = {
