@@ -6,16 +6,27 @@ from PIL import Image, ImageFilter, ImageOps
 
 
 @dataclass(frozen=True)
+class NamePreprocessConfig:
+    resize_factor: int = 3
+    brightness_threshold: int = 180
+    trim_padding: int = 8
+    binary_threshold: int = 150
+
+
+@dataclass(frozen=True)
 class PreprocessedImage:
     name: str
     image: Image.Image
 
 
+DEFAULT_NAME_PREPROCESS_CONFIG = NamePreprocessConfig()
+
+
 def trim_bright_text_region(
     image: Image.Image,
     *,
-    brightness_threshold: int = 180,
-    padding: int = 8,
+    brightness_threshold: int = DEFAULT_NAME_PREPROCESS_CONFIG.brightness_threshold,
+    padding: int = DEFAULT_NAME_PREPROCESS_CONFIG.trim_padding,
 ) -> Image.Image:
     rgb_image = image.convert("RGB")
     xs: list[int] = []
@@ -42,25 +53,49 @@ def trim_bright_text_region(
     return image.crop((left, top, right, bottom))
 
 
-def _grayscale_resized(image: Image.Image, resize_factor: int) -> Image.Image:
-    grayscale = ImageOps.grayscale(image)
-    return grayscale.resize(
-        (grayscale.width * resize_factor, grayscale.height * resize_factor),
+def _to_grayscale(image: Image.Image) -> Image.Image:
+    return ImageOps.grayscale(image)
+
+
+def _resize_for_ocr(image: Image.Image, resize_factor: int) -> Image.Image:
+    return image.resize(
+        (image.width * resize_factor, image.height * resize_factor),
         resample=Image.Resampling.LANCZOS,
     )
 
 
-def preprocess_name_images(image: Image.Image) -> tuple[PreprocessedImage, ...]:
-    trimmed = trim_bright_text_region(image)
+def _increase_contrast(image: Image.Image) -> Image.Image:
+    return ImageOps.autocontrast(image)
 
-    gray_2x = _grayscale_resized(trimmed, 2)
-    threshold_3x = _grayscale_resized(trimmed, 3).point(
-        lambda pixel: 255 if pixel >= 150 else 0
+
+def _threshold_text(image: Image.Image, threshold: int) -> Image.Image:
+    return image.point(lambda pixel: 255 if pixel >= threshold else 0)
+
+
+def _sharpen_text(image: Image.Image) -> Image.Image:
+    return image.filter(ImageFilter.SHARPEN)
+
+
+def preprocess_name_images(
+    image: Image.Image,
+    config: NamePreprocessConfig = DEFAULT_NAME_PREPROCESS_CONFIG,
+) -> tuple[PreprocessedImage, ...]:
+    trimmed = trim_bright_text_region(
+        image,
+        brightness_threshold=config.brightness_threshold,
+        padding=config.trim_padding,
     )
-    sharp_3x = _grayscale_resized(trimmed, 3).filter(ImageFilter.SHARPEN)
+    grayscale = _to_grayscale(trimmed)
+    resized = _resize_for_ocr(grayscale, config.resize_factor)
+    contrast = _increase_contrast(resized)
+    threshold = _threshold_text(contrast, config.binary_threshold)
+    sharpened_threshold = _sharpen_text(threshold)
+    resize_suffix = f"{config.resize_factor}x"
 
     return (
-        PreprocessedImage(name="gray_2x", image=gray_2x),
-        PreprocessedImage(name="threshold_3x", image=threshold_3x),
-        PreprocessedImage(name="sharp_3x", image=sharp_3x),
+        PreprocessedImage(name="raw_crop", image=trimmed.convert("RGB")),
+        PreprocessedImage(name=f"gray_{resize_suffix}", image=resized),
+        PreprocessedImage(name=f"contrast_{resize_suffix}", image=contrast),
+        PreprocessedImage(name=f"threshold_{resize_suffix}", image=threshold),
+        PreprocessedImage(name=f"sharp_threshold_{resize_suffix}", image=sharpened_threshold),
     )

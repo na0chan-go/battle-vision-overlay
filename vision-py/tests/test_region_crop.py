@@ -20,9 +20,14 @@ from vision.gender import (
 from vision.main import build_active_payload
 from vision.match.pokemon import PokemonNameMatchResult
 from vision.name_match import ResolvedNameResult
-from vision.name_ocr import extract_name_texts
+from vision.name_ocr import (
+    NameOCRCandidate,
+    extract_name_texts,
+    select_best_ocr_candidate,
+)
 from vision.ocr.engine import OCRResult, OCRRuntimeError
 from vision.poc import extract_regions
+from vision.preprocess.text import NamePreprocessConfig, preprocess_name_images
 from vision.regions.battle import build_gender_regions, build_status_panel_regions
 
 
@@ -43,6 +48,15 @@ class RegionCropTest(unittest.TestCase):
                     fill=(20, 100, 250) if region.name == "opponent_gender" else (245, 70, 80),
                 )
         image.save(image_path)
+
+    def fake_region_ocr_result(self, image_path: Path) -> OCRResult:
+        image_path_text = str(image_path)
+        if "player_name" in image_path_text:
+            return OCRResult(text="ゲッコウガ", confidence=0.9)
+        return OCRResult(text="ドリュウズ", confidence=0.9)
+
+    def raise_temporary_ocr_failure(self) -> OCRResult:
+        raise OCRRuntimeError("temporary ocr failure")
 
     def test_extract_regions_saves_two_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -181,23 +195,73 @@ class RegionCropTest(unittest.TestCase):
 
             with mock.patch(
                 "vision.name_ocr.recognize_text",
-                side_effect=[
-                    OCRResult(text="ドリュウズ", confidence=0.9),
-                    OCRResult(text="ドリュウズ", confidence=0.8),
-                    OCRResult(text="ドリュウズ", confidence=0.7),
-                    OCRResult(text="ゲッコウガ", confidence=0.9),
-                    OCRResult(text="ゲッコウガ", confidence=0.8),
-                    OCRResult(text="ゲッコウガ", confidence=0.7),
-                ],
+                side_effect=self.fake_region_ocr_result,
             ):
                 results = extract_name_texts(image_path, output_dir)
 
             self.assertEqual(set(results.keys()), {"opponent_name", "player_name"})
             self.assertEqual(results["opponent_name"].raw_text, "ドリュウズ")
+            self.assertIsNotNone(results["opponent_name"].preprocess_name)
+            self.assertGreater(results["opponent_name"].ocr_confidence, 0.0)
+            self.assertTrue(results["opponent_name"].preprocess_candidates)
             self.assertTrue(results["opponent_name"].crop_path.exists())
             self.assertTrue(results["opponent_name"].preprocessed_path.exists())
             self.assertTrue(results["player_name"].crop_path.exists())
             self.assertTrue(results["player_name"].preprocessed_path.exists())
+
+    def test_preprocess_name_images_returns_raw_and_processed_variants(self) -> None:
+        image = Image.new("RGB", (80, 24), color=(20, 20, 80))
+        draw = ImageDraw.Draw(image)
+        draw.rectangle((16, 6, 62, 17), fill=(240, 240, 240))
+
+        variants = preprocess_name_images(
+            image,
+            NamePreprocessConfig(resize_factor=2, binary_threshold=150),
+        )
+
+        variant_names = [variant.name for variant in variants]
+        self.assertEqual(
+            variant_names,
+            [
+                "raw_crop",
+                "gray_2x",
+                "contrast_2x",
+                "threshold_2x",
+                "sharp_threshold_2x",
+            ],
+        )
+        self.assertEqual(variants[0].image.mode, "RGB")
+        self.assertEqual(variants[1].image.mode, "L")
+        self.assertGreater(variants[1].image.width, variants[0].image.width)
+
+    def test_select_best_ocr_candidate_prefers_consensus_text(self) -> None:
+        candidates = (
+            NameOCRCandidate(
+                preprocess_name="raw_crop",
+                image_path=Path("raw.png"),
+                raw_text="グッコウガ",
+                confidence=0.5,
+            ),
+            NameOCRCandidate(
+                preprocess_name="gray_3x",
+                image_path=Path("gray.png"),
+                raw_text="グッコウカ",
+                confidence=0.9,
+            ),
+            NameOCRCandidate(
+                preprocess_name="threshold_3x",
+                image_path=Path("threshold.png"),
+                raw_text="グッコウガ",
+                confidence=0.7,
+            ),
+        )
+
+        result = select_best_ocr_candidate(candidates)
+
+        self.assertIsNotNone(result)
+        assert result is not None
+        self.assertEqual(result.raw_text, "グッコウガ")
+        self.assertEqual(result.preprocess_name, "threshold_3x")
 
     def test_extract_gender_marks_saves_debug_images(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -365,19 +429,17 @@ class RegionCropTest(unittest.TestCase):
 
             with mock.patch(
                 "vision.name_ocr.recognize_text",
-                side_effect=[
-                    OCRRuntimeError("temporary ocr failure"),
-                    OCRResult(text="ドリュウズ", confidence=0.9),
-                    OCRResult(text="ドリュウズ", confidence=0.8),
-                    OCRResult(text="ゲッコウガ", confidence=0.9),
-                    OCRResult(text="ゲッコウガ", confidence=0.8),
-                    OCRResult(text="ゲッコウガ", confidence=0.7),
-                ],
+                side_effect=lambda path: (
+                    self.raise_temporary_ocr_failure()
+                    if Path(path).name == "opponent_name_raw_crop.png"
+                    else self.fake_region_ocr_result(Path(path))
+                ),
             ):
                 results = extract_name_texts(image_path, output_dir)
 
             self.assertEqual(results["opponent_name"].raw_text, "ドリュウズ")
             self.assertIsNone(results["opponent_name"].error)
+            self.assertTrue(results["opponent_name"].preprocess_candidates[0].error)
 
     def test_extract_name_texts_clears_error_after_non_best_success(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -388,14 +450,11 @@ class RegionCropTest(unittest.TestCase):
 
             with mock.patch(
                 "vision.name_ocr.recognize_text",
-                side_effect=[
-                    OCRResult(text="ドリュウズ", confidence=0.95),
-                    OCRRuntimeError("temporary ocr failure"),
-                    OCRResult(text="ドリュウズ", confidence=0.8),
-                    OCRResult(text="ゲッコウガ", confidence=0.9),
-                    OCRResult(text="ゲッコウガ", confidence=0.8),
-                    OCRResult(text="ゲッコウガ", confidence=0.7),
-                ],
+                side_effect=lambda path: (
+                    self.raise_temporary_ocr_failure()
+                    if Path(path).name == "opponent_name_gray_3x.png"
+                    else self.fake_region_ocr_result(Path(path))
+                ),
             ):
                 results = extract_name_texts(image_path, output_dir)
 
@@ -411,14 +470,11 @@ class RegionCropTest(unittest.TestCase):
 
             with mock.patch(
                 "vision.name_ocr.recognize_text",
-                side_effect=[
-                    OCRResult(text="ドリュウズ", confidence=0.95),
-                    OCRRuntimeError("temporary ocr failure"),
-                    OCRRuntimeError("temporary ocr failure"),
-                    OCRResult(text="ゲッコウガ", confidence=0.9),
-                    OCRResult(text="ゲッコウガ", confidence=0.8),
-                    OCRResult(text="ゲッコウガ", confidence=0.7),
-                ],
+                side_effect=lambda path: (
+                    self.raise_temporary_ocr_failure()
+                    if Path(path).name == "opponent_name_sharp_threshold_3x.png"
+                    else self.fake_region_ocr_result(Path(path))
+                ),
             ):
                 results = extract_name_texts(image_path, output_dir)
 

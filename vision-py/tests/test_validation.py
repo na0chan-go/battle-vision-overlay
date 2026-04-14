@@ -186,6 +186,14 @@ class ValidationTest(unittest.TestCase):
                 "top_candidates",
                 saved_report["results"][1]["name_match"]["player_name"],
             )
+            self.assertIn(
+                "preprocess_candidates",
+                saved_report["results"][1]["ocr"]["player_name"],
+            )
+            self.assertIn(
+                "ocr_confidence",
+                saved_report["results"][1]["ocr"]["player_name"],
+            )
 
 
 if __name__ == "__main__":
