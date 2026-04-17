@@ -108,6 +108,8 @@ PYTHONPATH=vision-py/src python3 -m vision.main --validate-samples
 
 `assets/samples/` 配下の `.png` / `.jpg` / `.jpeg` を処理し、画像ごとの debug 出力は `assets/debug/validation/<image_file_name>/` 相当のディレクトリ、一覧レポートは `assets/debug/validation_report.json` に保存します。簡易ステータスは、2体とも辞書照合できたら `success`、片方だけなら `partial`、両方 unknown または処理失敗なら `failed` です。
 
+ファイル名に `1080p` / `720p` / `scaled` / `with_margin` / `dark` / `compressed` を含めると、validation report の `condition_label` と条件別集計に反映されます。レポートには画像サイズ、実際に使われた切り出し座標、OCR raw text、辞書照合結果、gender、form、mega_state も保存されます。
+
 ## 最小連携 PoC
 
 `vision-py` から `engine-go` へ observation DTO を POST し、overlay DTO を受け取る最小連携は以下です。

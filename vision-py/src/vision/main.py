@@ -270,11 +270,31 @@ def main() -> None:
             else args.output_dir / "validation_report.json"
         )
         print(f"validation_report: {report_path}")
+        for condition_label, counts in summary["by_condition"].items():
+            print(
+                "validation condition: "
+                f"{condition_label} "
+                f"total={counts['total']} "
+                f"success={counts['success']} "
+                f"partial={counts['partial']} "
+                f"failed={counts['failed']}"
+            )
+        for image_size, counts in summary["by_image_size"].items():
+            print(
+                "validation image_size: "
+                f"{image_size} "
+                f"total={counts['total']} "
+                f"success={counts['success']} "
+                f"partial={counts['partial']} "
+                f"failed={counts['failed']}"
+            )
         for result in report["results"]:
             player_active = result["player_active"]
             opponent_active = result["opponent_active"]
             print(
-                f"{result['file_name']}: {result['status']} "
+                f"{result['file_name']} "
+                f"[{result['condition_label']} {result['image_size']}]: "
+                f"{result['status']} "
                 f"player={player_active['display_name']}({player_active['gender']}) "
                 f"opponent={opponent_active['display_name']}({opponent_active['gender']})"
             )
