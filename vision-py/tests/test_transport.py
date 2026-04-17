@@ -8,6 +8,7 @@ from unittest import mock
 
 from vision.transport.client import (
     OverlayRequestError,
+    build_overlay_error_response,
     post_observation,
     write_overlay_response_json,
 )
@@ -69,6 +70,16 @@ class OverlayTransportTest(unittest.TestCase):
     def test_post_observation_raises_clear_error_on_timeout(self, mock_urlopen: mock.Mock) -> None:
         with self.assertRaises(OverlayRequestError):
             post_observation({"scene": "battle"})
+
+    def test_build_overlay_error_response_returns_display_safe_payload(self) -> None:
+        payload = build_overlay_error_response("overlay request failed", "timed out")
+
+        self.assertEqual(payload["status"], "error")
+        self.assertEqual(payload["error"]["detail"], "timed out")
+        self.assertEqual(payload["player"]["display_name"], "unknown")
+        self.assertEqual(payload["player"]["speed_actual"], 0)
+        self.assertEqual(payload["opponent"]["speed_candidates"]["fastest"], 0)
+        self.assertEqual(payload["judgement"]["vs_fastest"], "unknown")
 
     def test_write_overlay_response_json_writes_pretty_json(self) -> None:
         payload = {

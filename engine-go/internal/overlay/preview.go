@@ -7,7 +7,10 @@ import (
 )
 
 const (
-	unknownValue = "unknown"
+	unknownValue  = "unknown"
+	statusOK      = "ok"
+	statusPartial = "partial"
+	statusUnknown = "unknown"
 )
 
 type ActiveObservation struct {
@@ -50,6 +53,8 @@ type Judgement struct {
 }
 
 type PreviewResponse struct {
+	Status    string          `json:"status"`
+	Message   string          `json:"message"`
 	Player    PlayerOverlay   `json:"player"`
 	Opponent  OpponentOverlay `json:"opponent"`
 	Judgement Judgement       `json:"judgement"`
@@ -58,11 +63,28 @@ type PreviewResponse struct {
 func BuildPreviewResponse(observation Observation, dex *master.Dex, playerSpeeds *playerconfig.SpeedSettings) PreviewResponse {
 	player := buildPlayerOverlay(observation.PlayerActive, dex, playerSpeeds)
 	opponent := buildOpponentOverlay(observation.OpponentActive, dex)
+	status, message := buildResponseStatus(player, opponent)
 
 	return PreviewResponse{
+		Status:    status,
+		Message:   message,
 		Player:    player,
 		Opponent:  opponent,
 		Judgement: buildJudgement(player.SpeedActual, opponent.SpeedCandidates),
+	}
+}
+
+func buildResponseStatus(player PlayerOverlay, opponent OpponentOverlay) (string, string) {
+	playerKnown := player.DisplayName != unknownValue
+	opponentKnown := opponent.DisplayName != unknownValue
+
+	switch {
+	case playerKnown && opponentKnown:
+		return statusOK, ""
+	case playerKnown || opponentKnown:
+		return statusPartial, "player or opponent could not be resolved"
+	default:
+		return statusUnknown, "player and opponent could not be resolved"
 	}
 }
 

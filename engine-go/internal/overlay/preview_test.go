@@ -62,6 +62,9 @@ func TestBuildPreviewResponseKnownPokemon(t *testing.T) {
 	if response.Player.DisplayName != "サーフゴー" {
 		t.Fatalf("player display name = %q, want %q", response.Player.DisplayName, "サーフゴー")
 	}
+	if response.Status != statusOK || response.Message != "" {
+		t.Fatalf("status/message = %q/%q, want ok/empty", response.Status, response.Message)
+	}
 	if response.Player.Gender != master.UnknownValue || response.Player.Form != master.NormalForm || response.Player.MegaState != master.BaseMegaState {
 		t.Fatalf("player metadata = gender:%q form:%q mega_state:%q, want unknown/normal/base", response.Player.Gender, response.Player.Form, response.Player.MegaState)
 	}
@@ -315,10 +318,57 @@ func TestBuildPreviewResponseUnknownPokemon(t *testing.T) {
 	if response.Player.SpeedActual != 0 {
 		t.Fatalf("player speed_actual = %d, want 0", response.Player.SpeedActual)
 	}
+	if response.Status != statusUnknown {
+		t.Fatalf("status = %q, want %q", response.Status, statusUnknown)
+	}
+	if response.Message == "" {
+		t.Fatal("message is empty, want unknown reason")
+	}
 	if response.Opponent.SpeedCandidates != (speed.SpeedCandidates{}) {
 		t.Fatalf("opponent speed candidates = %+v, want zero value", response.Opponent.SpeedCandidates)
 	}
 	if response.Judgement.VsFastest != "unknown" || response.Judgement.VsNeutral != "unknown" {
 		t.Fatalf("unexpected judgement = %+v", response.Judgement)
+	}
+}
+
+func TestBuildPreviewResponsePartialPokemon(t *testing.T) {
+	t.Parallel()
+
+	dex := master.NewDex([]master.PokemonEntry{
+		{
+			SpeciesID:   "garchomp",
+			DisplayName: "ガブリアス",
+			Gender:      master.UnknownValue,
+			Form:        master.NormalForm,
+			MegaState:   master.BaseMegaState,
+			BaseStats:   master.BaseStats{Spe: 102},
+		},
+	})
+
+	response := BuildPreviewResponse(
+		Observation{
+			PlayerActive: ActiveObservation{
+				SpeciesID: unknownValue,
+			},
+			OpponentActive: ActiveObservation{
+				SpeciesID: "garchomp",
+				Gender:    master.UnknownValue,
+				Form:      master.NormalForm,
+				MegaState: master.BaseMegaState,
+			},
+		},
+		dex,
+		playerconfig.NewEmptySpeedSettings(),
+	)
+
+	if response.Status != statusPartial {
+		t.Fatalf("status = %q, want %q", response.Status, statusPartial)
+	}
+	if response.Message == "" {
+		t.Fatal("message is empty, want partial reason")
+	}
+	if response.Judgement.VsFastest != unknownValue {
+		t.Fatalf("vs_fastest = %q, want %q", response.Judgement.VsFastest, unknownValue)
 	}
 }

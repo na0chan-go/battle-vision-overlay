@@ -1,0 +1,29 @@
+{
+  "status": "partial",
+  "message": "opponent could not be resolved",
+  "player": {
+    "display_name": "ゲッコウガ",
+    "gender": "male",
+    "form": "unknown",
+    "mega_state": "base",
+    "speed_actual": 174
+  },
+  "opponent": {
+    "display_name": "unknown",
+    "gender": "unknown",
+    "form": "unknown",
+    "mega_state": "unknown",
+    "speed_candidates": {
+      "fastest": 0,
+      "neutral": 0,
+      "scarf_fastest": 0,
+      "scarf_neutral": 0
+    }
+  },
+  "judgement": {
+    "vs_fastest": "unknown",
+    "vs_neutral": "unknown",
+    "vs_scarf_fastest": "unknown",
+    "vs_scarf_neutral": "unknown"
+  }
+}

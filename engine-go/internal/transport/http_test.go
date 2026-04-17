@@ -59,7 +59,9 @@ func TestOverlayPreviewHandlerReturnsOverlayDTO(t *testing.T) {
 	}
 
 	var payload struct {
-		Player struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+		Player  struct {
 			DisplayName string `json:"display_name"`
 			Gender      string `json:"gender"`
 			Form        string `json:"form"`
@@ -89,6 +91,9 @@ func TestOverlayPreviewHandlerReturnsOverlayDTO(t *testing.T) {
 	if payload.Player.SpeedActual != 123 {
 		t.Fatalf("player speed_actual = %d, want %d", payload.Player.SpeedActual, 123)
 	}
+	if payload.Status != "ok" || payload.Message != "" {
+		t.Fatalf("status/message = %q/%q, want ok/empty", payload.Status, payload.Message)
+	}
 	if payload.Player.Gender != master.UnknownValue || payload.Player.Form != master.UnknownValue || payload.Player.MegaState != master.BaseMegaState {
 		t.Fatalf("player metadata = gender:%q form:%q mega_state:%q, want unknown/unknown/base", payload.Player.Gender, payload.Player.Form, payload.Player.MegaState)
 	}
@@ -117,5 +122,8 @@ func TestOverlayPreviewHandlerReturnsUnknownForInvalidObservation(t *testing.T) 
 	}
 	if !bytes.Contains(rec.Body.Bytes(), []byte(`"speed_actual":0`)) {
 		t.Fatalf("response body = %s, want unknown response", rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte(`"status":"unknown"`)) {
+		t.Fatalf("response body = %s, want unknown status", rec.Body.String())
 	}
 }

@@ -144,4 +144,4 @@ python3 -m http.server 4173
 http://localhost:4173/overlay-ui/web/
 ```
 
-ページを開くと `overlay-ui/samples/overlay_sample.json` を自動読込します。`URL から読む` で任意の overlay JSON を読み込むこともできます。`engine-go` は現在「最新 overlay DTO を GET する専用 API」を持たないため、UI 側では sample JSON と URL 指定の JSON 読み込みを最小導線としています。
+ページを開くと正常系の sample JSON を自動読込します。画面上のボタンから、相手 unknown、自分 unknown、両方 unknown、エラー表示のサンプルも確認できます。unknown は `認識失敗`、速度や判定が比較不能な値は `−` / `比較不可` として表示します。`engine-go` は現在「最新 overlay DTO を GET する専用 API」を持たないため、UI 側では sample JSON と URL 指定の JSON 読み込みを最小導線としています。

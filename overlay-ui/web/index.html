@@ -19,7 +19,21 @@
       <section class="panel controls">
         <h2>入力</h2>
         <div class="control-row">
-          <button id="load-sample-button" type="button">サンプルを読む</button>
+          <button data-sample-url="../samples/overlay_sample_ok.json" type="button">
+            正常サンプル
+          </button>
+          <button data-sample-url="../samples/overlay_sample_opponent_unknown.json" type="button">
+            相手 unknown
+          </button>
+          <button data-sample-url="../samples/overlay_sample_player_unknown.json" type="button">
+            自分 unknown
+          </button>
+          <button data-sample-url="../samples/overlay_sample_unknown.json" type="button">
+            両方 unknown
+          </button>
+          <button data-sample-url="../samples/overlay_sample_error.json" type="button">
+            エラー表示
+          </button>
           <button id="apply-textarea-button" type="button">貼り付け JSON を反映</button>
         </div>
         <label class="field">
@@ -28,7 +42,7 @@
             <input
               id="source-url-input"
               type="text"
-              value="../samples/overlay_sample.json"
+              value="../samples/overlay_sample_ok.json"
               spellcheck="false"
             />
             <button id="load-url-button" type="button">URL から読む</button>
@@ -39,8 +53,8 @@
           <textarea id="json-input" rows="12" spellcheck="false"></textarea>
         </label>
         <p class="hint">
-          `engine-go` は現在 overlay DTO の GET エンドポイントを持たないため、UI では
-          sample JSON と任意 URL 上の JSON 読み込みを優先しています。
+          unknown は「認識失敗」、速度や判定が比較不能な場合は `−` / `比較不可` として表示します。
+          通信失敗や壊れた JSON はエラー状態として表示し、前回データを残しません。
         </p>
         <div id="status-banner" class="status-banner status-info">
           サンプルまたは JSON を読み込んでください。
