@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -31,6 +32,7 @@ _ACTIVE_REGION_MAP = {
     "player_active": ("player_name", "player_gender"),
     "opponent_active": ("opponent_name", "opponent_gender"),
 }
+_TOKEN_SEPARATOR_PATTERN = re.compile(r"[^a-z0-9]+")
 
 
 @dataclass(frozen=True)
@@ -70,16 +72,29 @@ def classify_validation_status(player_species_id: str, opponent_species_id: str)
 
 
 def infer_condition_label(image_path: Path) -> str:
-    normalized_stem = image_path.stem.lower().replace("-", "_")
+    normalized_stem = _TOKEN_SEPARATOR_PATTERN.sub("_", image_path.stem.lower())
+    tokens = tuple(token for token in normalized_stem.split("_") if token)
     labels: list[str] = []
     for keyword in _CONDITION_KEYWORDS:
-        if keyword == "margin" and "with_margin" in normalized_stem:
+        keyword_tokens = tuple(keyword.split("_"))
+        if keyword == "margin" and _has_condition_tokens(tokens, ("with", "margin")):
             continue
-        if keyword in normalized_stem:
+        if _has_condition_tokens(tokens, keyword_tokens):
             labels.append(keyword)
     if not labels:
         return UNLABELED_CONDITION
     return "+".join(labels)
+
+
+def _has_condition_tokens(tokens: tuple[str, ...], keyword_tokens: tuple[str, ...]) -> bool:
+    keyword_length = len(keyword_tokens)
+    if keyword_length == 0 or len(tokens) < keyword_length:
+        return False
+
+    return any(
+        tokens[index : index + keyword_length] == keyword_tokens
+        for index in range(len(tokens) - keyword_length + 1)
+    )
 
 
 def _status_counts() -> dict[str, int]:
@@ -126,6 +141,18 @@ def _build_active_validation_payload(
         }
     )
     return payload
+
+
+def _build_failed_active_payload(metadata: ActivePokemonMetadata) -> dict[str, object]:
+    return {
+        "raw_text": UNKNOWN_SPECIES_ID,
+        "species_id": UNKNOWN_SPECIES_ID,
+        "display_name": UNKNOWN_SPECIES_ID,
+        "gender": UNKNOWN_SPECIES_ID,
+        "form": metadata.form.strip() or "unknown",
+        "mega_state": metadata.mega_state.strip() or "base",
+        "confidence": 0.0,
+    }
 
 
 def validate_sample_image(image_path: Path, options: ValidationOptions) -> dict[str, object]:
@@ -208,24 +235,8 @@ def validate_sample_image(image_path: Path, options: ValidationOptions) -> dict[
             "resolved_regions": resolved_regions,
             "debug_dir": str(image_debug_dir),
             "observation_path": None,
-            "player_active": {
-                "raw_text": UNKNOWN_SPECIES_ID,
-                "species_id": UNKNOWN_SPECIES_ID,
-                "display_name": UNKNOWN_SPECIES_ID,
-                "gender": UNKNOWN_SPECIES_ID,
-                "form": "unknown",
-                "mega_state": "base",
-                "confidence": 0.0,
-            },
-            "opponent_active": {
-                "raw_text": UNKNOWN_SPECIES_ID,
-                "species_id": UNKNOWN_SPECIES_ID,
-                "display_name": UNKNOWN_SPECIES_ID,
-                "gender": UNKNOWN_SPECIES_ID,
-                "form": "unknown",
-                "mega_state": "base",
-                "confidence": 0.0,
-            },
+            "player_active": _build_failed_active_payload(options.player_metadata),
+            "opponent_active": _build_failed_active_payload(options.opponent_metadata),
         }
 
 

@@ -124,6 +124,10 @@ class ValidationTest(unittest.TestCase):
             infer_condition_label(Path("battle_1080p_with_margin.jpeg")),
             "1080p+with_margin",
         )
+        self.assertEqual(
+            infer_condition_label(Path("battle_1080p_uncompressed.jpeg")),
+            "1080p",
+        )
         self.assertEqual(infer_condition_label(Path("battle_sample.jpeg")), "unlabeled")
 
     def test_build_validation_report_groups_by_condition_and_image_size(self) -> None:
@@ -214,8 +218,14 @@ class ValidationTest(unittest.TestCase):
                         debug_root_dir=debug_root_dir,
                         report_path=report_path,
                         master_data_path=master_data_path,
-                        player_metadata=ActivePokemonMetadata(),
-                        opponent_metadata=ActivePokemonMetadata(),
+                        player_metadata=ActivePokemonMetadata(
+                            form="bond",
+                            mega_state="mega",
+                        ),
+                        opponent_metadata=ActivePokemonMetadata(
+                            form="normal",
+                            mega_state="base",
+                        ),
                     )
                 )
 
@@ -236,6 +246,10 @@ class ValidationTest(unittest.TestCase):
             self.assertEqual(saved_report["results"][0]["image_width"], 1280)
             self.assertEqual(saved_report["results"][0]["image_height"], 720)
             self.assertIn("opponent_name", saved_report["results"][0]["resolved_regions"])
+            self.assertEqual(saved_report["results"][0]["player_active"]["form"], "bond")
+            self.assertEqual(saved_report["results"][0]["player_active"]["mega_state"], "mega")
+            self.assertEqual(saved_report["results"][0]["opponent_active"]["form"], "normal")
+            self.assertEqual(saved_report["results"][0]["opponent_active"]["mega_state"], "base")
             self.assertEqual(saved_report["results"][1]["file_name"], "ok.jpeg")
             self.assertEqual(saved_report["results"][1]["status"], "success")
             self.assertEqual(saved_report["results"][1]["condition_label"], "unlabeled")
@@ -250,7 +264,7 @@ class ValidationTest(unittest.TestCase):
             )
             self.assertEqual(
                 saved_report["results"][1]["player_active"]["mega_state"],
-                "base",
+                "mega",
             )
             self.assertEqual(
                 saved_report["results"][1]["opponent_active"]["match_score"],
