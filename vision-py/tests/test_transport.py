@@ -51,10 +51,19 @@ class OverlayTransportTest(unittest.TestCase):
             }
         )
 
-        payload = post_observation({"scene": "battle"})
+        observation_payload = {
+            "scene": "battle",
+            "player_active": {"species_id": "greninja", "mega_state": "mega"},
+            "opponent_active": {"species_id": "garchomp", "mega_state": "base"},
+        }
+
+        payload = post_observation(observation_payload)
 
         self.assertEqual(payload["player"]["speed_actual"], 149)
         self.assertEqual(payload["opponent"]["display_name"], "ガブリアス")
+        request_payload = json.loads(mock_urlopen.call_args.args[0].data.decode("utf-8"))
+        self.assertEqual(request_payload["player_active"]["mega_state"], "mega")
+        self.assertEqual(request_payload["opponent_active"]["mega_state"], "base")
 
     @mock.patch("vision.transport.client.request.urlopen", side_effect=TimeoutError())
     def test_post_observation_raises_clear_error_on_timeout(self, mock_urlopen: mock.Mock) -> None:

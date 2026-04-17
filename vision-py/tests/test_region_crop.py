@@ -188,6 +188,32 @@ class RegionCropTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("--image", result.stderr)
 
+    def test_main_rejects_invalid_mega_state_argument(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "vision.main",
+                "--image",
+                "assets/samples/battle_sample.jpeg",
+                "--ocr-names",
+                "--player-mega-state",
+                "unknown",
+            ],
+            cwd=Path(__file__).resolve().parents[2],
+            env={
+                **os.environ,
+                "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src"),
+            },
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("--player-mega-state", result.stderr)
+        self.assertIn("invalid choice", result.stderr)
+
     def test_main_crop_mode_does_not_require_easyocr_import(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)

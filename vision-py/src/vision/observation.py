@@ -8,6 +8,7 @@ from pathlib import Path
 from vision.dto.observation import ActivePokemonObservation, Observation
 from vision.gender import GenderClassificationResult
 from vision.match.pokemon import PokemonNameMatchResult
+from vision.metadata import DEFAULT_FORM, DEFAULT_MEGA_STATE, normalize_mega_state
 from vision.name_match import ResolvedNameResult
 from vision.name_ocr import NameOCRResult
 
@@ -15,9 +16,6 @@ _ACTIVE_REGION_MAP = {
     "opponent_name": ("opponent_active", "opponent_gender"),
     "player_name": ("player_active", "player_gender"),
 }
-
-DEFAULT_FORM = "unknown"
-DEFAULT_MEGA_STATE = "base"
 
 
 @dataclass(frozen=True)
@@ -37,7 +35,7 @@ def _normalize_form(value: str) -> str:
 
 
 def _normalize_mega_state(value: str) -> str:
-    return value.strip() if value.strip() else DEFAULT_MEGA_STATE
+    return normalize_mega_state(value)
 
 
 def _build_active_observation(

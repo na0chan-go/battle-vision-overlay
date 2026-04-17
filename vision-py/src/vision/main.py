@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 
+from vision.metadata import ALLOWED_MEGA_STATES, DEFAULT_FORM, DEFAULT_MEGA_STATE
 from vision.poc import extract_regions
 
 
@@ -113,22 +114,24 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--player-form",
-        default="unknown",
+        default=DEFAULT_FORM,
         help="temporary player form value for observation DTO",
     )
     parser.add_argument(
         "--player-mega-state",
-        default="base",
+        default=DEFAULT_MEGA_STATE,
+        choices=ALLOWED_MEGA_STATES,
         help="temporary player mega_state value for observation DTO",
     )
     parser.add_argument(
         "--opponent-form",
-        default="unknown",
+        default=DEFAULT_FORM,
         help="temporary opponent form value for observation DTO",
     )
     parser.add_argument(
         "--opponent-mega-state",
-        default="base",
+        default=DEFAULT_MEGA_STATE,
+        choices=ALLOWED_MEGA_STATES,
         help="temporary opponent mega_state value for observation DTO",
     )
     parser.add_argument(
@@ -342,6 +345,8 @@ def main() -> None:
             print(f"{active_key}_gender_region: {payload['gender_region']}")
             print(f"{active_key}_gender: {payload['gender']}")
             print(f"{active_key}_gender_score: {payload['gender_score']:.4f}")
+            print(f"{active_key}_form: {payload['form']}")
+            print(f"{active_key}_mega_state: {payload['mega_state']}")
             if payload["error"] is not None:
                 print(f"{active_key}_error: {payload['error']}")
             if resolved_results is not None:

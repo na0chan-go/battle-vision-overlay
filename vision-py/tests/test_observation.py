@@ -155,6 +155,16 @@ class ObservationTest(unittest.TestCase):
         self.assertEqual(observation.opponent_active.form, "normal")
         self.assertEqual(observation.opponent_active.mega_state, "base")
 
+    def test_build_battle_observation_rejects_invalid_mega_state(self) -> None:
+        with self.assertRaisesRegex(ValueError, "mega_state must be one of"):
+            build_battle_observation(
+                self.make_ocr_results(),
+                self.make_gender_results(),
+                self.make_resolved_results(),
+                timestamp=1710000000,
+                player_metadata=ActivePokemonMetadata(mega_state="unknown"),
+            )
+
     def test_build_battle_observation_returns_unknown_for_unmatched_name(self) -> None:
         ocr_results = self.make_ocr_results()
         gender_results = self.make_gender_results()
