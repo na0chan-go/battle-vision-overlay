@@ -11,6 +11,8 @@
   --success-bg: rgba(36, 89, 61, 0.12);
   --error: #9c2f2f;
   --error-bg: rgba(156, 47, 47, 0.12);
+  --warning: #8a5a00;
+  --warning-bg: rgba(245, 158, 11, 0.16);
   --info: #314e70;
   --info-bg: rgba(49, 78, 112, 0.12);
 }
@@ -166,6 +168,11 @@ button:hover {
   background: var(--error-bg);
 }
 
+.status-warning {
+  color: var(--warning);
+  background: var(--warning-bg);
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -243,10 +250,30 @@ dd {
   font-weight: 700;
 }
 
+.value-unknown,
+.value-unavailable {
+  color: var(--muted);
+}
+
 .judgement-panel dd {
   padding: 4px 10px;
   border-radius: 999px;
   background: var(--accent-soft);
+}
+
+.judgement-win {
+  color: var(--success);
+  background: var(--success-bg) !important;
+}
+
+.judgement-lose {
+  color: var(--error);
+  background: var(--error-bg) !important;
+}
+
+.judgement-tie {
+  color: var(--info);
+  background: var(--info-bg) !important;
 }
 
 @media (max-width: 900px) {

@@ -221,7 +221,11 @@ def main() -> None:
                 build_battle_observation,
                 write_observation_json,
             )
-            from vision.transport import post_observation, write_overlay_response_json
+            from vision.transport import (
+                build_overlay_error_response,
+                post_observation,
+                write_overlay_response_json,
+            )
 
             active_metadata = {
                 "player_active": ActivePokemonMetadata(
@@ -333,20 +337,26 @@ def main() -> None:
                 player_metadata=active_metadata["player_active"],
                 opponent_metadata=active_metadata["opponent_active"],
             )
+            overlay_output_path = (
+                args.overlay_output
+                if args.overlay_output is not None
+                else args.output_dir / "overlay_response.json"
+            )
             try:
                 overlay_response = post_observation(
                     observation.to_dict(),
                     endpoint_url=args.overlay_endpoint,
                 )
             except RuntimeError as exc:
+                overlay_response = build_overlay_error_response(
+                    "overlay request failed",
+                    str(exc),
+                )
+                write_overlay_response_json(overlay_response, overlay_output_path)
+                print(json.dumps(overlay_response, ensure_ascii=False, indent=2))
                 print(f"overlay request failed: {exc}", file=sys.stderr)
                 raise SystemExit(1) from exc
 
-            overlay_output_path = (
-                args.overlay_output
-                if args.overlay_output is not None
-                else args.output_dir / "overlay_response.json"
-            )
             write_overlay_response_json(overlay_response, overlay_output_path)
             print(json.dumps(overlay_response, ensure_ascii=False, indent=2))
             return
