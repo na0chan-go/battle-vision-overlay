@@ -50,7 +50,7 @@ function isUnknownText(value) {
 }
 
 function isKnownEntity(target) {
-  return !isUnknownText(target.display_name);
+  return !isUnknownText(target.display_name_raw);
 }
 
 function toRawText(value) {
