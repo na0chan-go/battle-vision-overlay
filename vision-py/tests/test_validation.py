@@ -16,15 +16,21 @@ from vision.observation import ActivePokemonMetadata
 from vision.validation import (
     ValidationOptions,
     build_image_debug_dir,
+    build_validation_report,
     classify_validation_status,
+    infer_condition_label,
     list_sample_images,
     run_sample_validation,
 )
 
 
 class ValidationTest(unittest.TestCase):
-    def create_sample_image(self, image_path: Path) -> None:
-        image = Image.new("RGB", (1920, 1080), color=(25, 25, 35))
+    def create_sample_image(
+        self,
+        image_path: Path,
+        size: tuple[int, int] = (1920, 1080),
+    ) -> None:
+        image = Image.new("RGB", size, color=(25, 25, 35))
         image.save(image_path)
 
     def make_ocr_results(self, output_dir: Path) -> dict[str, NameOCRResult]:
@@ -109,6 +115,56 @@ class ValidationTest(unittest.TestCase):
 
             self.assertEqual([path.name for path in images], ["sample.PNG", "sample.jpeg"])
 
+    def test_infer_condition_label_from_file_name(self) -> None:
+        self.assertEqual(
+            infer_condition_label(Path("battle_720p_dark_compressed.jpeg")),
+            "720p+dark+compressed",
+        )
+        self.assertEqual(
+            infer_condition_label(Path("battle_1080p_with_margin.jpeg")),
+            "1080p+with_margin",
+        )
+        self.assertEqual(
+            infer_condition_label(Path("battle_1080p_uncompressed.jpeg")),
+            "1080p",
+        )
+        self.assertEqual(infer_condition_label(Path("battle_sample.jpeg")), "unlabeled")
+
+    def test_build_validation_report_groups_by_condition_and_image_size(self) -> None:
+        report = build_validation_report(
+            [
+                {
+                    "status": "success",
+                    "condition_label": "1080p",
+                    "image_width": 1920,
+                    "image_height": 1080,
+                },
+                {
+                    "status": "partial",
+                    "condition_label": "720p",
+                    "image_width": 1280,
+                    "image_height": 720,
+                },
+                {
+                    "status": "failed",
+                    "condition_label": "720p",
+                    "image_width": 1280,
+                    "image_height": 720,
+                },
+            ]
+        )
+
+        self.assertEqual(report["summary"]["total"], 3)
+        self.assertEqual(report["summary"]["success"], 1)
+        self.assertEqual(report["summary"]["partial"], 1)
+        self.assertEqual(report["summary"]["failed"], 1)
+        self.assertEqual(report["summary"]["by_condition"]["1080p"]["success"], 1)
+        self.assertEqual(report["summary"]["by_condition"]["720p"]["total"], 2)
+        self.assertEqual(report["summary"]["by_condition"]["720p"]["partial"], 1)
+        self.assertEqual(report["summary"]["by_condition"]["720p"]["failed"], 1)
+        self.assertEqual(report["summary"]["by_image_size"]["1920x1080"]["success"], 1)
+        self.assertEqual(report["summary"]["by_image_size"]["1280x720"]["total"], 2)
+
     def test_build_image_debug_dir_includes_extension(self) -> None:
         debug_root_dir = Path("debug")
 
@@ -125,14 +181,14 @@ class ValidationTest(unittest.TestCase):
             samples_dir = tmp_path / "samples"
             samples_dir.mkdir()
             self.create_sample_image(samples_dir / "ok.jpeg")
-            self.create_sample_image(samples_dir / "broken.jpeg")
+            self.create_sample_image(samples_dir / "broken_720p_dark.jpeg", (1280, 720))
             debug_root_dir = tmp_path / "debug" / "validation"
             report_path = tmp_path / "debug" / "validation_report.json"
             master_data_path = tmp_path / "pokemon.json"
             master_data_path.write_text("[]\n", encoding="utf-8")
 
             def fake_extract_name_texts(image_path: Path, output_dir: Path):
-                if image_path.name == "broken.jpeg":
+                if image_path.name == "broken_720p_dark.jpeg":
                     raise ValueError("sample is not readable")
                 return self.make_ocr_results(output_dir)
 
@@ -162,8 +218,14 @@ class ValidationTest(unittest.TestCase):
                         debug_root_dir=debug_root_dir,
                         report_path=report_path,
                         master_data_path=master_data_path,
-                        player_metadata=ActivePokemonMetadata(),
-                        opponent_metadata=ActivePokemonMetadata(),
+                        player_metadata=ActivePokemonMetadata(
+                            form="bond",
+                            mega_state="mega",
+                        ),
+                        opponent_metadata=ActivePokemonMetadata(
+                            form="normal",
+                            mega_state="base",
+                        ),
                     )
                 )
 
@@ -174,14 +236,44 @@ class ValidationTest(unittest.TestCase):
 
             saved_report = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertEqual(saved_report["summary"]["partial"], 0)
-            self.assertEqual(saved_report["results"][0]["file_name"], "broken.jpeg")
+            self.assertEqual(saved_report["summary"]["by_condition"]["720p+dark"]["failed"], 1)
+            self.assertEqual(saved_report["summary"]["by_condition"]["unlabeled"]["success"], 1)
+            self.assertEqual(saved_report["summary"]["by_image_size"]["1280x720"]["failed"], 1)
+            self.assertEqual(saved_report["summary"]["by_image_size"]["1920x1080"]["success"], 1)
+            self.assertEqual(saved_report["results"][0]["file_name"], "broken_720p_dark.jpeg")
             self.assertEqual(saved_report["results"][0]["status"], "failed")
+            self.assertEqual(saved_report["results"][0]["condition_label"], "720p+dark")
+            self.assertEqual(saved_report["results"][0]["image_width"], 1280)
+            self.assertEqual(saved_report["results"][0]["image_height"], 720)
+            self.assertIn("opponent_name", saved_report["results"][0]["resolved_regions"])
+            self.assertEqual(saved_report["results"][0]["player_active"]["form"], "bond")
+            self.assertEqual(saved_report["results"][0]["player_active"]["mega_state"], "mega")
+            self.assertEqual(saved_report["results"][0]["opponent_active"]["form"], "normal")
+            self.assertEqual(saved_report["results"][0]["opponent_active"]["mega_state"], "base")
             self.assertEqual(saved_report["results"][1]["file_name"], "ok.jpeg")
             self.assertEqual(saved_report["results"][1]["status"], "success")
+            self.assertEqual(saved_report["results"][1]["condition_label"], "unlabeled")
+            self.assertEqual(saved_report["results"][1]["image_size"], "1920x1080")
             self.assertEqual(saved_report["results"][1]["image_width"], 1920)
             self.assertEqual(saved_report["results"][1]["image_height"], 1080)
             self.assertIn("opponent_name", saved_report["results"][1]["resolved_regions"])
             self.assertIn("player_gender", saved_report["results"][1]["resolved_regions"])
+            self.assertEqual(
+                saved_report["results"][1]["player_active"]["raw_text"],
+                "サーフゴー",
+            )
+            self.assertEqual(
+                saved_report["results"][1]["player_active"]["mega_state"],
+                "mega",
+            )
+            self.assertEqual(
+                saved_report["results"][1]["opponent_active"]["match_score"],
+                0.95,
+            )
+            self.assertEqual(
+                saved_report["results"][1]["opponent_active"]["gender_reason"],
+                "not_recorded",
+            )
             self.assertEqual(
                 saved_report["results"][1]["name_match"]["player_name"]["normalized_text"],
                 "",
