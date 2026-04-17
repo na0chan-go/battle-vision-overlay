@@ -13,6 +13,8 @@ const UNKNOWN_JUDGEMENT_LABEL = "比較不可";
 
 function createDefaultOverlayDto() {
   return {
+    status: UNKNOWN_VALUE,
+    message: "",
     player: {
       display_name: UNKNOWN_VALUE,
       gender: UNKNOWN_VALUE,
@@ -313,11 +315,13 @@ function renderOverlayDto(payload, statusOverride = null) {
 
 function createTransportErrorPayload(message, detail = UNKNOWN_VALUE) {
   return {
+    ...createDefaultOverlayDto(),
+    status: "error",
+    message,
     error: {
       message,
       detail,
     },
-    ...createDefaultOverlayDto(),
   };
 }
 
