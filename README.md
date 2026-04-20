@@ -317,7 +317,7 @@ PYTHONPATH=vision-py/src python3 -m unittest discover -s vision-py/tests -v
 node --check overlay-ui/web/main.js
 python3 -m json.tool schemas/observation.schema.json >/dev/null
 python3 -m json.tool schemas/overlay.schema.json >/dev/null
-python3 -m json.tool overlay-ui/samples/*.json >/dev/null
+for f in overlay-ui/samples/*.json; do python3 -m json.tool "$f" >/dev/null || exit 1; done
 git diff --check
 ```
 
