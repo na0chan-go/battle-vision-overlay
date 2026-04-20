@@ -17,7 +17,7 @@ from vision.gender import (
     classify_gender_symbol_detail,
     extract_gender_marks,
 )
-from vision.main import build_active_payload
+from vision.main import build_active_payload, build_single_run_output_dir
 from vision.match.pokemon import PokemonNameMatchResult
 from vision.name_match import ResolvedNameResult
 from vision.name_ocr import (
@@ -188,6 +188,12 @@ class RegionCropTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("--image", result.stderr)
 
+    def test_build_single_run_output_dir_groups_single_run_debug_output(self) -> None:
+        self.assertEqual(
+            build_single_run_output_dir(Path("assets/debug")),
+            Path("assets/debug/single-run"),
+        )
+
     def test_main_rejects_invalid_mega_state_argument(self) -> None:
         result = subprocess.run(
             [
@@ -195,7 +201,7 @@ class RegionCropTest(unittest.TestCase):
                 "-m",
                 "vision.main",
                 "--image",
-                "assets/samples/battle_sample.jpeg",
+                "assets/samples/battle/battle_sample.jpeg",
                 "--ocr-names",
                 "--player-mega-state",
                 "unknown",
@@ -276,6 +282,8 @@ class RegionCropTest(unittest.TestCase):
             self.assertTrue(results["opponent_name"].preprocessed_path.exists())
             self.assertTrue(results["player_name"].crop_path.exists())
             self.assertTrue(results["player_name"].preprocessed_path.exists())
+            self.assertEqual(results["opponent_name"].crop_path.name, "opponent_name_raw.png")
+            self.assertEqual(results["player_name"].crop_path.name, "player_name_raw.png")
 
     def test_preprocess_name_images_returns_raw_and_processed_variants(self) -> None:
         image = Image.new("RGB", (80, 24), color=(20, 20, 80))
@@ -345,6 +353,8 @@ class RegionCropTest(unittest.TestCase):
             self.assertEqual(results["player_gender"].gender, "female")
             self.assertTrue(results["opponent_gender"].crop_path.exists())
             self.assertTrue(results["player_gender"].crop_path.exists())
+            self.assertEqual(results["opponent_gender"].crop_path.name, "opponent_gender_raw.png")
+            self.assertEqual(results["player_gender"].crop_path.name, "player_gender_raw.png")
             self.assertEqual(results["opponent_gender"].reason, "male_above_threshold")
             self.assertEqual(results["player_gender"].reason, "female_above_threshold")
 
@@ -408,21 +418,21 @@ class RegionCropTest(unittest.TestCase):
         ocr_results = {
             "opponent_name": mock.Mock(
                 raw_text="ニャオニクス",
-                crop_path=Path("assets/debug/opponent_name.png"),
-                preprocessed_path=Path("assets/debug/opponent_name_preprocessed.png"),
+                crop_path=Path("assets/debug/single-run/opponent_name_raw.png"),
+                preprocessed_path=Path("assets/debug/single-run/opponent_name_preprocessed.png"),
                 error=None,
             ),
             "player_name": mock.Mock(
                 raw_text="サーフゴー",
-                crop_path=Path("assets/debug/player_name.png"),
-                preprocessed_path=Path("assets/debug/player_name_preprocessed.png"),
+                crop_path=Path("assets/debug/single-run/player_name_raw.png"),
+                preprocessed_path=Path("assets/debug/single-run/player_name_preprocessed.png"),
                 error=None,
             ),
         }
         gender_results = {
             "opponent_gender": GenderClassificationResult(
                 region_name="opponent_gender",
-                crop_path=Path("assets/debug/opponent_gender.png"),
+                crop_path=Path("assets/debug/single-run/opponent_gender_raw.png"),
                 gender="female",
                 score=0.92,
                 male_score=10.0,
@@ -430,7 +440,7 @@ class RegionCropTest(unittest.TestCase):
             ),
             "player_gender": GenderClassificationResult(
                 region_name="player_gender",
-                crop_path=Path("assets/debug/player_gender.png"),
+                crop_path=Path("assets/debug/single-run/player_gender_raw.png"),
                 gender="unknown",
                 score=0.0,
                 male_score=0.0,

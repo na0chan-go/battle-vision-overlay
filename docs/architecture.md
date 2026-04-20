@@ -37,6 +37,19 @@ Go 側は対戦ロジック専用です。Python が出力した observation DTO
 4. `engine-go` が `overlay` DTO を返す
 5. `overlay-ui` が overlay DTO または sample JSON を表示する
 
+## データ配置の方針
+
+設定値、sample、debug 出力は役割を分けて配置します。
+
+- `shared/master-data/`: 種族値など、アプリ全体で共有するマスタデータ
+- `shared/player-config/`: 自分側の実数値など、ユーザー設定に近いデータ
+- `assets/samples/battle/`: vision-py の再現用サンプル画像
+- `overlay-ui/samples/`: overlay-ui の表示確認用 sample JSON
+- `assets/debug/single-run/`: 単発実行の crop、前処理画像、observation、overlay response
+- `assets/debug/validation/`: 複数サンプル検証の画像別 debug 出力
+
+sample は再現用入力、debug は実行結果として扱い、混在させない方針です。
+
 ## MVP の対象
 
 最初の MVP は、現在の盤面に出ている 2 体の認識と、素早さ候補の表示までを対象にします。

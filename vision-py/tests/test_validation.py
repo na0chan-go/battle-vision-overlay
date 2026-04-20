@@ -37,14 +37,14 @@ class ValidationTest(unittest.TestCase):
         return {
             "opponent_name": NameOCRResult(
                 region_name="opponent_name",
-                crop_path=output_dir / "opponent_name.png",
+                crop_path=output_dir / "opponent_name_raw.png",
                 preprocessed_path=output_dir / "opponent_name_preprocessed.png",
                 raw_text="ガブリアス",
                 error=None,
             ),
             "player_name": NameOCRResult(
                 region_name="player_name",
-                crop_path=output_dir / "player_name.png",
+                crop_path=output_dir / "player_name_raw.png",
                 preprocessed_path=output_dir / "player_name_preprocessed.png",
                 raw_text="サーフゴー",
                 error=None,
@@ -55,7 +55,7 @@ class ValidationTest(unittest.TestCase):
         return {
             "opponent_gender": GenderClassificationResult(
                 region_name="opponent_gender",
-                crop_path=output_dir / "opponent_gender.png",
+                crop_path=output_dir / "opponent_gender_raw.png",
                 gender="male",
                 score=0.9,
                 male_score=120.0,
@@ -63,7 +63,7 @@ class ValidationTest(unittest.TestCase):
             ),
             "player_gender": GenderClassificationResult(
                 region_name="player_gender",
-                crop_path=output_dir / "player_gender.png",
+                crop_path=output_dir / "player_gender_raw.png",
                 gender="unknown",
                 score=0.0,
                 male_score=0.0,
@@ -165,14 +165,14 @@ class ValidationTest(unittest.TestCase):
         self.assertEqual(report["summary"]["by_image_size"]["1920x1080"]["success"], 1)
         self.assertEqual(report["summary"]["by_image_size"]["1280x720"]["total"], 2)
 
-    def test_build_image_debug_dir_includes_extension(self) -> None:
+    def test_build_image_debug_dir_uses_stem_and_suffix(self) -> None:
         debug_root_dir = Path("debug")
 
         jpg_debug_dir = build_image_debug_dir(Path("battle.jpg"), debug_root_dir)
         png_debug_dir = build_image_debug_dir(Path("battle.png"), debug_root_dir)
 
-        self.assertEqual(jpg_debug_dir, debug_root_dir / "battle.jpg")
-        self.assertEqual(png_debug_dir, debug_root_dir / "battle.png")
+        self.assertEqual(jpg_debug_dir, debug_root_dir / "battle_jpg")
+        self.assertEqual(png_debug_dir, debug_root_dir / "battle_png")
         self.assertNotEqual(jpg_debug_dir, png_debug_dir)
 
     def test_run_sample_validation_continues_after_image_failure(self) -> None:
@@ -245,6 +245,7 @@ class ValidationTest(unittest.TestCase):
             self.assertEqual(saved_report["results"][0]["condition_label"], "720p+dark")
             self.assertEqual(saved_report["results"][0]["image_width"], 1280)
             self.assertEqual(saved_report["results"][0]["image_height"], 720)
+            self.assertTrue(saved_report["results"][0]["debug_dir"].endswith("broken_720p_dark_jpeg"))
             self.assertIn("opponent_name", saved_report["results"][0]["resolved_regions"])
             self.assertEqual(saved_report["results"][0]["player_active"]["form"], "bond")
             self.assertEqual(saved_report["results"][0]["player_active"]["mega_state"], "mega")
@@ -256,6 +257,7 @@ class ValidationTest(unittest.TestCase):
             self.assertEqual(saved_report["results"][1]["image_size"], "1920x1080")
             self.assertEqual(saved_report["results"][1]["image_width"], 1920)
             self.assertEqual(saved_report["results"][1]["image_height"], 1080)
+            self.assertTrue(saved_report["results"][1]["debug_dir"].endswith("ok_jpeg"))
             self.assertIn("opponent_name", saved_report["results"][1]["resolved_regions"])
             self.assertIn("player_gender", saved_report["results"][1]["resolved_regions"])
             self.assertEqual(

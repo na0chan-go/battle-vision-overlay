@@ -24,15 +24,15 @@ class ObservationTest(unittest.TestCase):
         return {
             "opponent_name": NameOCRResult(
                 region_name="opponent_name",
-                crop_path=Path("assets/debug/opponent_name.png"),
-                preprocessed_path=Path("assets/debug/opponent_name_preprocessed.png"),
+                crop_path=Path("assets/debug/single-run/opponent_name_raw.png"),
+                preprocessed_path=Path("assets/debug/single-run/opponent_name_preprocessed.png"),
                 raw_text="ガブリアス",
                 error=None,
             ),
             "player_name": NameOCRResult(
                 region_name="player_name",
-                crop_path=Path("assets/debug/player_name.png"),
-                preprocessed_path=Path("assets/debug/player_name_preprocessed.png"),
+                crop_path=Path("assets/debug/single-run/player_name_raw.png"),
+                preprocessed_path=Path("assets/debug/single-run/player_name_preprocessed.png"),
                 raw_text="サーフゴー",
                 error=None,
             ),
@@ -42,7 +42,7 @@ class ObservationTest(unittest.TestCase):
         return {
             "opponent_gender": GenderClassificationResult(
                 region_name="opponent_gender",
-                crop_path=Path("assets/debug/opponent_gender.png"),
+                crop_path=Path("assets/debug/single-run/opponent_gender_raw.png"),
                 gender="male",
                 score=0.93,
                 male_score=120.0,
@@ -50,7 +50,7 @@ class ObservationTest(unittest.TestCase):
             ),
             "player_gender": GenderClassificationResult(
                 region_name="player_gender",
-                crop_path=Path("assets/debug/player_gender.png"),
+                crop_path=Path("assets/debug/single-run/player_gender_raw.png"),
                 gender="unknown",
                 score=0.0,
                 male_score=0.0,

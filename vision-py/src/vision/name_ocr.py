@@ -99,7 +99,7 @@ def extract_name_texts(image_path: Path, output_dir: Path) -> dict[str, NameOCRR
     results: dict[str, NameOCRResult] = {}
     for region in regions:
         cropped = crop_region(image, region)
-        crop_path = output_dir / f"{region.name}.png"
+        crop_path = output_dir / f"{region.name}_raw.png"
         save_crop(cropped, crop_path)
 
         preprocessed_path = output_dir / f"{region.name}_preprocessed.png"
