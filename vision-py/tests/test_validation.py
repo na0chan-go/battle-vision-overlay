@@ -164,6 +164,19 @@ class ValidationTest(unittest.TestCase):
         self.assertEqual(report["summary"]["by_condition"]["720p"]["failed"], 1)
         self.assertEqual(report["summary"]["by_image_size"]["1920x1080"]["success"], 1)
         self.assertEqual(report["summary"]["by_image_size"]["1280x720"]["total"], 2)
+        self.assertEqual(report["tuning_parameters"]["name_preprocess"]["resize_factor"], 3)
+        self.assertEqual(
+            report["tuning_parameters"]["gender_classifier"]["min_score_margin"],
+            0.25,
+        )
+        self.assertEqual(
+            report["tuning_parameters"]["region_reference"]["reference_width"],
+            1920,
+        )
+        self.assertEqual(
+            report["tuning_parameters"]["region_reference"]["name_regions"][0]["name"],
+            "opponent_name",
+        )
 
     def test_build_image_debug_dir_uses_stem_and_suffix(self) -> None:
         debug_root_dir = Path("debug")

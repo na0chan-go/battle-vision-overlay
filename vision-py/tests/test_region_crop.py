@@ -34,6 +34,7 @@ from vision.regions.battle import (
     build_name_regions,
     build_status_panel_regions,
 )
+from vision.tuning import GenderClassifierConfig
 
 
 class RegionCropTest(unittest.TestCase):
@@ -413,6 +414,18 @@ class RegionCropTest(unittest.TestCase):
         self.assertEqual(result.gender, "unknown")
         self.assertEqual(result.reason, "score_too_close")
         self.assertLess(result.margin, 0.25)
+
+    def test_classify_gender_symbol_detail_uses_tuning_config(self) -> None:
+        image = Image.new("RGB", (36, 36), color=(20, 100, 250))
+
+        result = classify_gender_symbol_detail(
+            image,
+            GenderClassifierConfig(min_active_score=10_000.0),
+        )
+
+        self.assertEqual(result.gender, "unknown")
+        self.assertEqual(result.reason, "score_below_threshold")
+        self.assertEqual(result.threshold, 10_000.0)
 
     def test_build_active_payload_includes_gender(self) -> None:
         ocr_results = {
