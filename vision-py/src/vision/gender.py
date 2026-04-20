@@ -157,7 +157,7 @@ def extract_gender_marks(
     results: dict[str, GenderClassificationResult] = {}
     for region in regions:
         cropped = crop_region(image, region)
-        crop_path = output_dir / f"{region.name}.png"
+        crop_path = output_dir / f"{region.name}_raw.png"
         save_crop(cropped, crop_path)
 
         decision = classify_gender_symbol_detail(cropped)

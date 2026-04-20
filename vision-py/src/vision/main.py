@@ -9,6 +9,10 @@ from vision.metadata import ALLOWED_MEGA_STATES, DEFAULT_FORM, DEFAULT_MEGA_STAT
 from vision.poc import extract_regions
 
 
+def build_single_run_output_dir(output_dir: Path) -> Path:
+    return output_dir / "single-run"
+
+
 def build_active_payload(
     ocr_results: dict[str, object],
     gender_results: dict[str, object],
@@ -84,7 +88,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--output-dir",
         type=Path,
         default=Path("assets") / "debug",
-        help="directory for cropped debug images",
+        help="root directory for debug output",
     )
     parser.add_argument(
         "--ocr-names",
@@ -164,7 +168,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--samples-dir",
         type=Path,
-        default=Path("assets") / "samples",
+        default=Path("assets") / "samples" / "battle",
         help="directory containing sample images for validation",
     )
     parser.add_argument(
@@ -237,8 +241,9 @@ def main() -> None:
                     mega_state=args.opponent_mega_state,
                 ),
             }
-            ocr_results = extract_name_texts(args.image, args.output_dir)
-            gender_results = extract_gender_marks(args.image, args.output_dir)
+            single_run_output_dir = build_single_run_output_dir(args.output_dir)
+            ocr_results = extract_name_texts(args.image, single_run_output_dir)
+            gender_results = extract_gender_marks(args.image, single_run_output_dir)
             should_resolve_names = args.resolve_names or args.emit_observation
             should_resolve_names = should_resolve_names or args.request_overlay
             resolved_results = (
@@ -250,7 +255,10 @@ def main() -> None:
                 else None
             )
         else:
-            saved_files = extract_regions(args.image, args.output_dir)
+            saved_files = extract_regions(
+                args.image,
+                build_single_run_output_dir(args.output_dir),
+            )
     except (FileNotFoundError, ValueError) as exc:
         if args.validate_samples:
             task_name = "vision validation"
@@ -324,7 +332,7 @@ def main() -> None:
             observation_output_path = (
                 args.observation_output
                 if args.observation_output is not None
-                else args.output_dir / "observation.json"
+                else build_single_run_output_dir(args.output_dir) / "observation.json"
             )
             write_observation_json(observation, observation_output_path)
             print(json.dumps(observation.to_dict(), ensure_ascii=False, indent=2))
@@ -340,7 +348,7 @@ def main() -> None:
             overlay_output_path = (
                 args.overlay_output
                 if args.overlay_output is not None
-                else args.output_dir / "overlay_response.json"
+                else build_single_run_output_dir(args.output_dir) / "overlay_response.json"
             )
             try:
                 overlay_response = post_observation(

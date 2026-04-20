@@ -108,7 +108,10 @@ def _image_size_label(image_width: object, image_height: object) -> str:
 
 
 def build_image_debug_dir(image_path: Path, debug_root_dir: Path) -> Path:
-    return debug_root_dir / image_path.name
+    suffix = image_path.suffix.lower().lstrip(".")
+    if suffix:
+        return debug_root_dir / f"{image_path.stem}_{suffix}"
+    return debug_root_dir / image_path.stem
 
 
 def _build_active_validation_payload(

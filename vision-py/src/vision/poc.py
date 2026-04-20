@@ -15,7 +15,7 @@ def extract_regions(image_path: Path, output_dir: Path) -> dict[str, Path]:
     saved_files: dict[str, Path] = {}
     for region in regions:
         cropped = crop_region(image, region)
-        output_path = output_dir / f"{region.name}.png"
+        output_path = output_dir / f"{region.name}_raw.png"
         save_crop(cropped, output_path)
         saved_files[region.name] = output_path
 
