@@ -4,11 +4,35 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "status",
+    "message",
     "player",
     "opponent",
     "judgement"
   ],
   "properties": {
+    "status": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "message",
+        "detail"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string"
+        }
+      }
+    },
     "player": {
       "type": "object",
       "additionalProperties": false,

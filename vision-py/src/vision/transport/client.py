@@ -12,6 +12,42 @@ class OverlayRequestError(RuntimeError):
     """Raised when the overlay preview request fails."""
 
 
+def build_overlay_error_response(message: str, detail: str = "unknown") -> dict[str, object]:
+    return {
+        "status": "error",
+        "message": message,
+        "error": {
+            "message": message,
+            "detail": detail,
+        },
+        "player": {
+            "display_name": "unknown",
+            "gender": "unknown",
+            "form": "unknown",
+            "mega_state": "unknown",
+            "speed_actual": 0,
+        },
+        "opponent": {
+            "display_name": "unknown",
+            "gender": "unknown",
+            "form": "unknown",
+            "mega_state": "unknown",
+            "speed_candidates": {
+                "fastest": 0,
+                "neutral": 0,
+                "scarf_fastest": 0,
+                "scarf_neutral": 0,
+            },
+        },
+        "judgement": {
+            "vs_fastest": "unknown",
+            "vs_neutral": "unknown",
+            "vs_scarf_fastest": "unknown",
+            "vs_scarf_neutral": "unknown",
+        },
+    }
+
+
 def post_observation(
     observation_payload: dict[str, object],
     *,

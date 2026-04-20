@@ -1,0 +1,29 @@
+{
+  "status": "partial",
+  "message": "player could not be resolved",
+  "player": {
+    "display_name": "unknown",
+    "gender": "unknown",
+    "form": "unknown",
+    "mega_state": "unknown",
+    "speed_actual": 0
+  },
+  "opponent": {
+    "display_name": "ドリュウズ",
+    "gender": "male",
+    "form": "normal",
+    "mega_state": "base",
+    "speed_candidates": {
+      "fastest": 154,
+      "neutral": 140,
+      "scarf_fastest": 231,
+      "scarf_neutral": 210
+    }
+  },
+  "judgement": {
+    "vs_fastest": "unknown",
+    "vs_neutral": "unknown",
+    "vs_scarf_fastest": "unknown",
+    "vs_scarf_neutral": "unknown"
+  }
+}
