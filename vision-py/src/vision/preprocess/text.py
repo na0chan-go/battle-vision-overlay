@@ -4,22 +4,13 @@ from dataclasses import dataclass
 
 from PIL import Image, ImageFilter, ImageOps
 
-
-@dataclass(frozen=True)
-class NamePreprocessConfig:
-    resize_factor: int = 3
-    brightness_threshold: int = 180
-    trim_padding: int = 8
-    binary_threshold: int = 150
+from vision.tuning import DEFAULT_NAME_PREPROCESS_CONFIG, NamePreprocessConfig
 
 
 @dataclass(frozen=True)
 class PreprocessedImage:
     name: str
     image: Image.Image
-
-
-DEFAULT_NAME_PREPROCESS_CONFIG = NamePreprocessConfig()
 
 
 def trim_bright_text_region(

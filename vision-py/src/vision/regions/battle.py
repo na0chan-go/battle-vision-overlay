@@ -3,9 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vision.dto.region import Region
+from vision.tuning import DEFAULT_REGION_REFERENCE_CONFIG, RegionBoxConfig
 
-REFERENCE_WIDTH = 1920
-REFERENCE_HEIGHT = 1080
+REFERENCE_WIDTH = DEFAULT_REGION_REFERENCE_CONFIG.reference_width
+REFERENCE_HEIGHT = DEFAULT_REGION_REFERENCE_CONFIG.reference_height
 
 
 @dataclass(frozen=True)
@@ -76,32 +77,26 @@ def _reference_region(
     )
 
 
-STATUS_PANEL_REGIONS: tuple[NormalizedRegion, ...] = (
-    _reference_region(
-        name="opponent_status_panel",
-        left=1480,
-        top=37,
-        width=400,
-        height=128,
-    ),
-    _reference_region(
-        name="player_status_panel",
-        left=43,
-        top=910,
-        width=404,
-        height=140,
-    ),
-)
+def _reference_regions(
+    regions: tuple[RegionBoxConfig, ...],
+) -> tuple[NormalizedRegion, ...]:
+    return tuple(
+        _reference_region(
+            name=region.name,
+            left=region.left,
+            top=region.top,
+            width=region.width,
+            height=region.height,
+        )
+        for region in regions
+    )
 
-NAME_REGIONS: tuple[NormalizedRegion, ...] = (
-    _reference_region(name="opponent_name", left=1590, top=54, width=210, height=50),
-    _reference_region(name="player_name", left=153, top=930, width=210, height=52),
-)
 
-GENDER_REGIONS: tuple[NormalizedRegion, ...] = (
-    _reference_region(name="opponent_gender", left=1832, top=56, width=36, height=36),
-    _reference_region(name="player_gender", left=394, top=940, width=36, height=36),
+STATUS_PANEL_REGIONS = _reference_regions(
+    DEFAULT_REGION_REFERENCE_CONFIG.status_panel_regions,
 )
+NAME_REGIONS = _reference_regions(DEFAULT_REGION_REFERENCE_CONFIG.name_regions)
+GENDER_REGIONS = _reference_regions(DEFAULT_REGION_REFERENCE_CONFIG.gender_regions)
 
 
 def resolve_regions(

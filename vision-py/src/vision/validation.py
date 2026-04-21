@@ -15,6 +15,7 @@ from vision.observation import (
     write_observation_json,
 )
 from vision.regions.battle import build_active_recognition_region_payload
+from vision.tuning import build_tuning_parameters_payload
 
 SUPPORTED_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg"})
 UNKNOWN_SPECIES_ID = "unknown"
@@ -269,6 +270,7 @@ def build_validation_report(
         size_counts[status] += 1
 
     return {
+        "tuning_parameters": build_tuning_parameters_payload(),
         "summary": {
             "total": len(results),
             **summary,

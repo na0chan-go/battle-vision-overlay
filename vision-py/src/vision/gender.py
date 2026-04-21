@@ -10,16 +10,7 @@ from vision.capture.loader import load_image
 from vision.debug.crop_debug import crop_region, save_crop
 from vision.dto.region import Region
 from vision.regions.battle import build_gender_regions
-
-_MIN_ACTIVE_SCORE = 120.0
-_MIN_DOMINANT_RATIO = 0.7
-_MIN_SCORE_MARGIN = 0.25
-_MIN_PIXEL_COLOR_SCORE = 0.25
-_MIN_PIXEL_VALUE = 0.2
-_MALE_HUE_MIN = 0.52
-_MALE_HUE_MAX = 0.72
-_FEMALE_HUE_MAX = 0.06
-_FEMALE_HUE_MIN = 0.90
+from vision.tuning import DEFAULT_GENDER_CLASSIFIER_CONFIG, GenderClassifierConfig
 
 
 @dataclass(frozen=True)
@@ -44,7 +35,7 @@ class GenderClassificationResult:
     female_score: float
     region: Region | None = None
     active_score: float = 0.0
-    threshold: float = _MIN_ACTIVE_SCORE
+    threshold: float = DEFAULT_GENDER_CLASSIFIER_CONFIG.min_active_score
     margin: float = 0.0
     reason: str = "not_recorded"
 
@@ -64,7 +55,10 @@ class GenderClassificationResult:
         }
 
 
-def classify_gender_symbol_detail(image: Image.Image) -> GenderClassificationDecision:
+def classify_gender_symbol_detail(
+    image: Image.Image,
+    config: GenderClassifierConfig = DEFAULT_GENDER_CLASSIFIER_CONFIG,
+) -> GenderClassificationDecision:
     male_score = 0.0
     female_score = 0.0
 
@@ -81,23 +75,26 @@ def classify_gender_symbol_detail(image: Image.Image) -> GenderClassificationDec
                 blue / 255.0,
             )
             color_score = saturation * value
-            if color_score < _MIN_PIXEL_COLOR_SCORE or value < _MIN_PIXEL_VALUE:
+            if (
+                color_score < config.min_pixel_color_score
+                or value < config.min_pixel_value
+            ):
                 continue
 
-            if _MALE_HUE_MIN <= hue <= _MALE_HUE_MAX:
+            if config.male_hue_min <= hue <= config.male_hue_max:
                 male_score += color_score
-            elif hue <= _FEMALE_HUE_MAX or hue >= _FEMALE_HUE_MIN:
+            elif hue <= config.female_hue_max or hue >= config.female_hue_min:
                 female_score += color_score
 
     active_score = male_score + female_score
-    if active_score < _MIN_ACTIVE_SCORE:
+    if active_score < config.min_active_score:
         return GenderClassificationDecision(
             gender="unknown",
             score=0.0,
             male_score=male_score,
             female_score=female_score,
             active_score=active_score,
-            threshold=_MIN_ACTIVE_SCORE,
+            threshold=config.min_active_score,
             margin=0.0,
             reason="score_below_threshold",
         )
@@ -105,26 +102,26 @@ def classify_gender_symbol_detail(image: Image.Image) -> GenderClassificationDec
     dominant_score = max(male_score, female_score)
     dominant_ratio = dominant_score / active_score
     margin = abs(male_score - female_score) / active_score
-    if margin < _MIN_SCORE_MARGIN:
+    if margin < config.min_score_margin:
         return GenderClassificationDecision(
             gender="unknown",
             score=dominant_ratio,
             male_score=male_score,
             female_score=female_score,
             active_score=active_score,
-            threshold=_MIN_SCORE_MARGIN,
+            threshold=config.min_score_margin,
             margin=margin,
             reason="score_too_close",
         )
 
-    if dominant_ratio < _MIN_DOMINANT_RATIO:
+    if dominant_ratio < config.min_dominant_ratio:
         return GenderClassificationDecision(
             gender="unknown",
             score=dominant_ratio,
             male_score=male_score,
             female_score=female_score,
             active_score=active_score,
-            threshold=_MIN_DOMINANT_RATIO,
+            threshold=config.min_dominant_ratio,
             margin=margin,
             reason="dominant_ratio_below_threshold",
         )
@@ -136,7 +133,7 @@ def classify_gender_symbol_detail(image: Image.Image) -> GenderClassificationDec
         male_score=male_score,
         female_score=female_score,
         active_score=active_score,
-        threshold=_MIN_DOMINANT_RATIO,
+        threshold=config.min_dominant_ratio,
         margin=margin,
         reason=f"{gender}_above_threshold",
     )
